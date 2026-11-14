@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "pr": null,
+  "comments": [
+    {
+      "id": "c1",
+      "source": "local",
+      "file": "src/discountCalculator.js",
+      "startLine": 9,
+      "endLine": 9,
+      "text": "return Math.min(discount, subtotal);",
+      "status": "waiting",
+      "messages": [
+        {
+          "author": "you",
+          "at": "2026-11-14T20:52:00.000Z",
+          "text": "Should a 100% promo plus loyalty be allowed to zero out the order? Worth a test for the cap."
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "source": "local",
+      "file": "src/pricingEngine.js",
+      "startLine": 8,
+      "endLine": 8,
+      "text": "const discount = applyDiscount(ctx, subtotal);",
+      "status": "declined",
+      "messages": [
+        {
+          "author": "you",
+          "at": "2026-11-14T20:53:00.000Z",
+          "text": "Should the discount apply after tax instead?"
+        },
+        {
+          "author": "agent",
+          "at": "2026-11-14T20:58:00.000Z",
+          "text": "Not changing this. Tax on the discounted amount is the existing behaviour (see the comment on line 7) and it matches the goal of this story."
+        }
+      ]
+    }
+  ]
+}
