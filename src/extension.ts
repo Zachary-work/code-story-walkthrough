@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { CommentUi } from './comments';
 import { EditorFollower } from './editor';
-import { AGENT_PROMPT, StoryPanel } from './panel';
+import { AGENT_PROMPT, MISSING_REASON, StoryPanel } from './panel';
 import { Session } from './session';
 import { Store } from './store';
 import { StoryTree } from './tree';
@@ -41,6 +41,15 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   register('codeStories.open', () => panel.show());
+
+  // Opening .stories/stories.json brings up the panel beside it.
+  const showForStoriesFile = (active?: vscode.TextEditor) => {
+    if (active?.document.uri.scheme === 'file' && store.rel(active.document.uri.fsPath) === '.stories/stories.json') {
+      panel.show(true);
+    }
+  };
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(showForStoriesFile));
+  showForStoriesFile(vscode.window.activeTextEditor);
   register('codeStories.openStory', (index: number) => {
     panel.show();
     session.openStory(index);
@@ -48,13 +57,13 @@ export function activate(context: vscode.ExtensionContext): void {
   register('codeStories.nextStep', () => session.moveStep(1));
   register('codeStories.prevStep', () => session.moveStep(-1));
   register('codeStories.showUnstoried', async () => {
-    const files = store.doc?.unstoried?.files ?? [];
+    const files = session.unstoried;
     if (!files.length) {
       void vscode.window.showInformationMessage('Every changed file is part of a story.');
       return;
     }
     const pick = await vscode.window.showQuickPick(
-      files.map(f => ({ label: f.path, description: f.reason })),
+      files.map(f => ({ label: f.path, description: f.missing ? MISSING_REASON : f.reason })),
       { title: 'Changes not in a story', placeHolder: store.doc?.unstoried?.summary ?? 'Pick a file to see its diff' }
     );
     if (pick) {

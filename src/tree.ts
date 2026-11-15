@@ -19,7 +19,7 @@ export class StoryTree implements vscode.TreeDataProvider<Node>, vscode.Disposab
       return [];
     }
     const nodes: Node[] = this.session.stories.map((story, index) => ({ story, index }));
-    if (this.session.store.doc?.unstoried?.files?.length) {
+    if (this.session.unstoried.length) {
       nodes.push('unstoried');
     }
     return nodes;
@@ -27,7 +27,7 @@ export class StoryTree implements vscode.TreeDataProvider<Node>, vscode.Disposab
 
   getTreeItem(node: Node): vscode.TreeItem {
     if (node === 'unstoried') {
-      const files = this.session.store.doc!.unstoried!.files.length;
+      const files = this.session.unstoried.length;
       const item = new vscode.TreeItem('Not in a story');
       item.description = `${files} file${files === 1 ? '' : 's'}`;
       item.iconPath = new vscode.ThemeIcon('diff');

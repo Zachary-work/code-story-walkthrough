@@ -30,6 +30,17 @@ export async function gitHead(root: string): Promise<string | undefined> {
   }
 }
 
+/** Workspace files that differ from base, untracked ones included, or undefined when git cannot say. */
+export async function changedFiles(root: string, base: string): Promise<string[] | undefined> {
+  try {
+    const tracked = await run('git', ['diff', '--name-only', '--relative', base], root);
+    const untracked = await run('git', ['ls-files', '--others', '--exclude-standard'], root);
+    return [...new Set((tracked + untracked).split('\n').filter(Boolean))];
+  } catch {
+    return undefined;
+  }
+}
+
 /** Path of a workspace file relative to the repository root, which is what GitHub expects. */
 async function repoPath(root: string, file: string): Promise<string> {
   try {

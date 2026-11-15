@@ -51,17 +51,53 @@
     </div>`;
   }
 
-  function unstoried(doc) {
-    const files = doc.unstoried && doc.unstoried.files ? doc.unstoried.files : [];
-    if (!files.length) {
+  // One line that accounts for every changed file, so the reviewer can see nothing is hidden.
+  function coverage() {
+    const c = state.coverage;
+    if (!c) {
       return '';
     }
+    const missing = state.unstoried.filter(f => f.missing).length;
+    const explained = c.changed - c.storied - missing;
+    const parts = [`${c.storied} in stories`, `${explained} not in a story`];
+    return `<div class="muted small">Of ${plural(c.changed, 'changed file', 'changed files')}: ${parts.join(', ')}${
+      missing ? `, <span class="warn strong">${missing} missing from the stories file</span>` : ''
+    }</div>`;
+  }
+
+  function fileGroup(reason, files, extra) {
+    return `<div class="group${extra ? ' missing' : ''}">
+      <div class="group-head"><span class="strong${extra ? ' warn' : ''}">${esc(reason)}</span><span class="muted small">${plural(files.length, 'file', 'files')}</span></div>
+      ${extra || ''}
+      <div class="files">${files.map(f => `<button class="file mono" data-a="unstoriedFile" data-path="${esc(f.path)}" title="Open the diff">${esc(f.path)}</button>`).join('')}</div>
+    </div>`;
+  }
+
+  // Changed files that are in no story, grouped by the reason they were left out.
+  function unstoried(doc) {
+    const files = state.unstoried;
+    if (!files.length) {
+      return state.coverage
+        ? '<div class="section"><div class="eyebrow">CHANGES NOT IN A STORY</div><div class="muted">None. Every changed file is part of a story.</div></div>'
+        : '';
+    }
+    const missing = files.filter(f => f.missing);
+    const groups = new Map();
+    for (const f of files.filter(x => !x.missing)) {
+      const reason = f.reason || 'No reason given';
+      groups.set(reason, [...(groups.get(reason) || []), f]);
+    }
+    const ask = `<span class="small">These files changed, but the stories file does not mention them, so nothing says why they are left out. In your agent chat, ask:</span>
+      <div class="prompt"><span class="mono">${esc(state.refreshPrompt)}</span>${copyButton(state.refreshPrompt)}</div>`;
+    const summary = doc.unstoried && doc.unstoried.summary;
     return `<div class="section">
-      <div class="eyebrow">NOT IN A STORY</div>
-      <button class="row dashed" data-a="unstoried">
-        <span class="strong">${plural(files.length, 'file', 'files')}</span>
-        <span class="muted">${esc(doc.unstoried.summary || 'Changes that do not affect behaviour, shown as plain diffs')}</span>
-      </button>
+      <div class="eyebrow">CHANGES NOT IN A STORY · ${plural(files.length, 'FILE', 'FILES')}</div>
+      ${summary ? `<p>${esc(summary)}</p>` : ''}
+      <div class="muted small">These files changed but are on no story's path. Each group gives the reason. Click a file to see its diff.${
+        state.coverage ? '' : ' The change could not be read from git, so this list is only what the stories file says.'
+      }</div>
+      ${missing.length ? fileGroup('Missing from the stories file', missing, ask) : ''}
+      ${[...groups].map(([reason, list]) => fileGroup(reason, list)).join('')}
     </div>`;
   }
 
@@ -86,6 +122,7 @@
         <h1>${esc(doc.title)}</h1>
         <div class="mono muted small">${esc(sub)}</div>
         <div class="muted small">${esc(stats)}</div>
+        ${coverage()}
       </div>
       <p class="lead">This change tells ${plural(doc.stories.length, 'story', 'stories')}. Each one starts at its entry point and follows the calls down to the code that changed.</p>
       ${progress(doc)}
@@ -338,7 +375,7 @@
       case 'diff': return post({ type: 'openDiff', index: Number(d.i) });
       case 'file': return post({ type: 'openFile', index: Number(d.i) });
       case 'reviewed': return post({ type: 'toggleReviewed' });
-      case 'unstoried': return post({ type: 'unstoried' });
+      case 'unstoriedFile': return post({ type: 'openUnstoried', path: d.path });
       case 'comment': return post({ type: 'openComment', id: d.id });
       case 'unlinkPr': return post({ type: 'unlinkPr' });
       case 'refreshPr': return post({ type: 'refreshPr' });

@@ -129,6 +129,7 @@ const unstoried = new Set();
 for (const [i, f] of (doc.unstoried?.files ?? []).entries()) {
   if (!f.path) errors.push(`unstoried.files[${i}]: path is required`);
   else unstoried.add(f.path.replace(/\\/g, '/'));
+  if (!f.reason) errors.push(`unstoried.files[${i}]: reason is required. Say why ${f.path ?? 'the file'} is in no story`);
 }
 
 // Every changed file must be in a story or listed as unstoried.
@@ -139,12 +140,14 @@ const base = doc.baseSha ?? doc.base;
 if (base) {
   try {
     const prefix = git('rev-parse', '--show-prefix');
-    const changed = git('diff', '--name-only', base)
+    // Untracked files are part of the change too: the panel flags them when they are left out.
+    const untracked = git('ls-files', '--others', '--exclude-standard').split('\n').filter(Boolean);
+    const tracked = git('diff', '--name-only', base)
       .split('\n')
       .filter(Boolean)
       .filter(f => f.startsWith(prefix))
-      .map(f => f.slice(prefix.length))
-      .filter(f => !f.startsWith('.stories/'));
+      .map(f => f.slice(prefix.length));
+    const changed = [...new Set([...tracked, ...untracked])].filter(f => !f.startsWith('.stories/'));
     for (const f of changed) {
       if (!storiedFiles.has(f) && !unstoried.has(f)) {
         errors.push(`${f} changed since ${doc.base ?? base} but is in no story and not in unstoried.files`);

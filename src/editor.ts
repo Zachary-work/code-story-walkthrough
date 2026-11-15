@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Step, Story, resolveLine } from './model';
@@ -69,6 +70,11 @@ export class EditorFollower implements vscode.Disposable {
     }
     const api = (git.isActive ? git.exports : await git.activate()).getAPI(1);
     const title = `${path.basename(file)} (${store.doc?.base ?? base.slice(0, 7)} ↔ working tree)`;
+    if (!fs.existsSync(uri.fsPath)) {
+      // Deleted in this change: there is no working copy to compare, so show what was removed.
+      await vscode.window.showTextDocument(api.toGitUri(uri, base), { viewColumn: vscode.ViewColumn.One });
+      return;
+    }
     const selection = line ? new vscode.Range(line - 1, 0, line - 1, 0) : undefined;
     await vscode.commands.executeCommand('vscode.diff', api.toGitUri(uri, base), uri, title, {
       viewColumn: vscode.ViewColumn.One,

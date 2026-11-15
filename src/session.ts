@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import * as vscode from 'vscode';
-import { gitHead } from './github';
-import { Step, Story } from './model';
+import { changedFiles, gitHead } from './github';
+import { Step, Story, UnstoriedFile } from './model';
 import { Store } from './store';
 
 /** Where the reviewer is: which story, step and line, and which stories are reviewed. */
@@ -11,6 +11,8 @@ export class Session implements vscode.Disposable {
   stepIndex = 0;
   line = 0;
   stale = false;
+  /** Files that differ from the base of the stories, or undefined when that could not be checked. */
+  changed?: string[];
 
   private readonly changeEmitter = new vscode.EventEmitter<void>();
   private readonly navigateEmitter = new vscode.EventEmitter<void>();
@@ -19,13 +21,18 @@ export class Session implements vscode.Disposable {
   /** Fires when the editor should follow to the current step and line. */
   readonly onDidNavigate = this.navigateEmitter.event;
 
+  private readonly subscriptions: vscode.Disposable[];
+
   constructor(readonly store: Store, private readonly memento: vscode.Memento) {
-    store.onDidChange(() => {
-      this.clamp();
-      this.changeEmitter.fire();
-      void this.checkStale();
-    });
-    void this.checkStale();
+    this.subscriptions = [
+      store.onDidChange(() => {
+        this.clamp();
+        this.changeEmitter.fire();
+        void this.checkGit();
+      }),
+      vscode.workspace.onDidSaveTextDocument(() => void this.checkGit())
+    ];
+    void this.checkGit();
   }
 
   get stories(): Story[] {
@@ -36,6 +43,21 @@ export class Session implements vscode.Disposable {
   }
   get step(): Step | undefined {
     return this.story?.steps[this.stepIndex];
+  }
+
+  /** Changed files that are in no story: the ones the stories file explains, then any it leaves out. */
+  get unstoried(): UnstoriedFile[] {
+    const listed: UnstoriedFile[] = this.store.doc?.unstoried?.files ?? [];
+    const known = new Set(listed.map(f => f.path));
+    const storied = this.storiedFiles();
+    const missing = (this.changed ?? []).filter(f => !known.has(f) && !storied.has(f));
+    return [...listed, ...missing.map(path => ({ path, missing: true }))];
+  }
+
+  /** How the changed files are covered, or undefined when the change could not be read from git. */
+  get coverage(): { changed: number; storied: number } | undefined {
+    const storied = this.storiedFiles();
+    return this.changed && { changed: this.changed.length, storied: this.changed.filter(f => storied.has(f)).length };
   }
 
   openStory(index: number): void {
@@ -118,17 +140,29 @@ export class Session implements vscode.Disposable {
     this.stepIndex = Math.min(this.stepIndex, this.stories[this.storyIndex].steps.length - 1);
   }
 
-  private async checkStale(): Promise<void> {
-    const recorded = this.store.doc?.headSha;
+  private storiedFiles(): Set<string> {
+    return new Set(this.stories.flatMap(s => s.steps.map(step => step.file)));
+  }
+
+  /** Asks git whether HEAD has moved on from the stories, and which files the change touches. */
+  private async checkGit(): Promise<void> {
+    const doc = this.store.doc;
+    const recorded = doc?.headSha;
     const head = recorded ? await gitHead(this.store.root) : undefined;
     const stale = !!recorded && !!head && !head.startsWith(recorded) && !recorded.startsWith(head);
-    if (stale !== this.stale) {
+    const base = doc?.baseSha ?? doc?.base;
+    const changed = base
+      ? (await changedFiles(this.store.root, base))?.filter(f => !f.startsWith('.stories/')).sort()
+      : undefined;
+    if (stale !== this.stale || changed?.join('\n') !== this.changed?.join('\n')) {
       this.stale = stale;
+      this.changed = changed;
       this.changeEmitter.fire();
     }
   }
 
   dispose(): void {
+    this.subscriptions.forEach(d => d.dispose());
     this.changeEmitter.dispose();
     this.navigateEmitter.dispose();
   }

@@ -69,9 +69,10 @@ root and use forward slashes. All line numbers are 1-based.
     }
   ],
   "unstoried": {
-    "summary": "A dependency bump and formatting in two files.",
+    "summary": "A dependency bump and a new test fixture.",
     "files": [
-      { "path": "pom.xml", "reason": "Dependency bump" }
+      { "path": "pom.xml", "reason": "Dependency version bump only; no code in this change uses a new API" },
+      { "path": "src/test/resources/promos.json", "reason": "Test fixture; read by tests, not by any story's code path" }
     ]
   }
 }
@@ -88,7 +89,7 @@ root and use forward slashes. All line numbers are 1-based.
 | `headSha` | recommended | `HEAD` when the stories were written. If `HEAD` moves, the panel says the stories are out of date. |
 | `stats` | optional | Totals for the whole change: `files`, `additions`, `deletions`. |
 | `stories` | yes | In the order a reviewer should read them. |
-| `unstoried` | when needed | Changed files that are in no story: `summary` and `files[]` of `{ path, reason }`. |
+| `unstoried` | when needed | Changed files that are in no story: `summary` and `files[]` of `{ path, reason }`. `path` and `reason` are both required. `reason` says why the file is in no story; the panel groups files that share the same `reason`. |
 
 ### Story
 

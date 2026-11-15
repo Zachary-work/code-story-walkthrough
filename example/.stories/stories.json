@@ -159,7 +159,7 @@
   "unstoried": {
     "summary": "Sample cart data used by the tests.",
     "files": [
-      { "path": "src/carts.js", "reason": "Fixture data" }
+      { "path": "src/carts.js", "reason": "Sample cart data only; the promo code path reads carts but its logic did not change" }
     ]
   }
 }

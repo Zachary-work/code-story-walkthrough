@@ -56,6 +56,13 @@ export interface StoriesDoc {
   unstoried?: { summary?: string; files: { path: string; reason?: string }[] };
 }
 
+/** A changed file that is in no story. `missing` means the stories file does not mention it at all. */
+export interface UnstoriedFile {
+  path: string;
+  reason?: string;
+  missing?: boolean;
+}
+
 export type CommentStatus = 'waiting' | 'changed' | 'declined' | 'answered' | 'posted';
 
 export interface Message {

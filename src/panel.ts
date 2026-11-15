@@ -7,6 +7,8 @@ import { Session } from './session';
 
 export const AGENT_PROMPT = 'Read and address my review comments';
 export const CREATE_PROMPT = 'Create code stories for this branch';
+export const REFRESH_PROMPT = 'Refresh the code stories so every changed file is covered';
+export const MISSING_REASON = 'Missing from the stories file';
 
 /** The story panel: a webview beside the editor that shows the overview and one story at a time. */
 export class StoryPanel implements vscode.Disposable {
@@ -22,7 +24,8 @@ export class StoryPanel implements vscode.Disposable {
     this.subscription = session.onDidChange(() => this.post());
   }
 
-  show(): void {
+  /** Opens or reveals the panel. Pass preserveFocus to leave the keyboard in the current editor. */
+  show(preserveFocus = false): void {
     if (this.panel) {
       this.panel.reveal(undefined, true);
       return;
@@ -31,7 +34,7 @@ export class StoryPanel implements vscode.Disposable {
     this.panel = vscode.window.createWebviewPanel(
       'codeStories.panel',
       'Stories',
-      { viewColumn: vscode.ViewColumn.Beside, preserveFocus: false },
+      { viewColumn: vscode.ViewColumn.Beside, preserveFocus },
       { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [media] }
     );
     const webview = this.panel.webview;
@@ -74,10 +77,13 @@ export class StoryPanel implements vscode.Disposable {
       line: session.line,
       reviewed: session.reviewedIds(),
       stale: session.stale,
+      unstoried: session.unstoried,
+      coverage: session.coverage ?? null,
       pr: pr ? { number: pr.number, url: pr.url } : null,
       waiting: open.filter(c => c.source === 'local' && c.status === 'waiting').length,
       agentPrompt: AGENT_PROMPT,
       createPrompt: CREATE_PROMPT,
+      refreshPrompt: REFRESH_PROMPT,
       comments: open.map(c => ({
         id: c.id,
         where: `${path.posix.basename(c.file)}:${c.startLine === c.endLine ? c.endLine : `${c.startLine}-${c.endLine}`}`,
@@ -109,8 +115,10 @@ export class StoryPanel implements vscode.Disposable {
       }
       case 'openFile':
         return session.selectStep(m.index);
-      case 'unstoried':
-        return vscode.commands.executeCommand('codeStories.showUnstoried');
+      case 'openUnstoried': {
+        const file = session.unstoried.find(f => f.path === m.path);
+        return file && this.editor.openDiff(file.path);
+      }
       case 'linkPr':
         await this.comments.linkPr(m.url);
         return;

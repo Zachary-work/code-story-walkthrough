@@ -15,6 +15,9 @@ Two parts work together through files in `.stories/`:
 1. Ask your agent: **"Create code stories for this branch"**. It writes `.stories/stories.json`.
 2. Run **Code Stories: Open Story Panel**. Pick a story, then step through it. Clicking a line,
    an arrow in the sequence diagram or a class opens that file at that line in the editor.
+   The overview also accounts for every changed file. Files that are on no story's path are listed
+   under **Changes not in a story**, grouped by the reason they were left out; click one to see its
+   diff. A changed file that the stories file does not mention at all is flagged as missing.
 3. To comment, select lines in the editor and use the plus in the gutter.
    - **Comment locally** saves to `.stories/comments.json` for your agent.
    - **Comment on PR** posts a review comment to the linked GitHub pull request (needs the
@@ -43,7 +46,8 @@ workspace, `.agents/skills`, or `~/.claude/skills`). Or copy `skill/code-stories
 The skill includes two scripts the agent runs with Node:
 
 - `scripts/validate.mjs` checks `stories.json`: structure, that every quoted line matches the file
-  at that line number, and that every changed file is in a story or listed as "not in a story".
+  at that line number, and that every changed file is in a story or listed as "not in a story"
+  with a reason.
 - `scripts/comments.mjs` lists waiting comments and records replies.
 
 The file formats are documented in `skill/code-stories/references/schema.md`.
