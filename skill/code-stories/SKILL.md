@@ -66,13 +66,40 @@ and step `id`s where the story is still the same one, and leaving its `comments.
    not as a description of the code. A typical PR has two to six stories. A changed method may
    appear in more than one story when two paths run through it.
 
-4. **Write the steps.** Each step is one method on the path, in call order, starting with the
-   entry point.
+4. **Write the steps.** Each step is exactly one unit of code on the path, in call order,
+   starting with the entry point. A reviewer reads a step as "this function, and what changed in
+   it", so a step must never mix lines from two units.
+   - The unit is whatever the language calls one callable: a function, a method, a constructor,
+     a getter or setter, a closure or callback (an event handler, a route handler passed inline),
+     a SQL procedure, a template or component. For a script with code at the top level, the unit
+     is one contiguous block that does one thing.
+   - Every line of a step lies inside that one unit. If you want to show lines from a second
+     function, that is a second step.
+   - A call inside the same class or file is still a call. When `Cart.total` calls
+     `Cart.applyDiscount`, write two steps, the second one called from the first. Do not fold
+     the callee's lines into the caller's step. The diagram draws it as a call from the class
+     to itself.
+   - A callback defined inline inside another function is its own unit once it does real work.
+     The outer function's step shows where the callback is registered; the callback's step shows
+     its body. Name it for what it handles (`showUnstoried handler`, `onSave callback`).
+   - Name the step after the unit: `Class.method`, `module.function`, or a short label for a
+     callback or a top-level block (`validate.mjs: changed-file check`).
+   - If two changed functions are not on the same call path, they do not share a step, and
+     usually not a story either.
    - Include unchanged methods that sit between the entry point and the change. Show only a few
-     lines of them: the signature if it helps, and the line that makes the next call, marked
+     lines of them: the signature, and the line that makes the next call, marked
      `call`.
    - For changed methods, show the added lines (`add`), the removed lines (`del`), and enough
      `context` lines to read them. This is an excerpt, not the whole method.
+   - Every step opens with the signature of its unit, changed or not: the line that declares
+     the function, method, constructor or getter, or the line that defines the callback
+     (`router.post('/quote', async (req, res) => {`). Mark it `context` when it did not change.
+     Only the unit's own doc comment or decorators may come before it, and only when they
+     changed. If the signature spans several lines, show all of them. A top-level block has no
+     signature; open with its first line.
+   - The panel marks every place where the excerpt leaves lines out ("12 lines not shown"), so
+     the reader does not take two separate blocks for one. Keep each block readable on its own,
+     and do not skip just one or two lines: include them as `context` instead.
    - `text` must be copied from the file as it is now, for every line except `del` lines. Leading
      indentation may be trimmed. Line numbers are 1-based and refer to the current file.
    - Set `focusLine` to the line the editor should land on: the first changed line, or the

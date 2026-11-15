@@ -14,6 +14,7 @@ const storiesPath = path.join(set.dir, 'stories.json');
 const errors = [];
 const warnings = [];
 const KINDS = ['context', 'add', 'del', 'call'];
+const MAX_GAP = 40;
 console.log(`Story set: ${set.id} (${path.relative(root, storiesPath).replace(/\\/g, '/')})`);
 
 let doc;
@@ -88,6 +89,7 @@ for (const [si, story] of (Array.isArray(doc.stories) ? doc.stories : []).entrie
       continue;
     }
     let previous = 0;
+    let opening = 0;
     for (const [li, l] of step.lines.entries()) {
       const lw = `${w}.lines[${li}]`;
       if (!KINDS.includes(l.kind)) {
@@ -108,12 +110,27 @@ for (const [si, story] of (Array.isArray(doc.stories) ? doc.stories : []).entrie
         continue;
       }
       if (l.line <= previous) errors.push(`${lw}: line numbers must increase (${l.line} after ${previous})`);
+      // A step is one function. A long jump inside the excerpt usually means it shows two.
+      // The jump from the signature into a long function's body is expected, so it is not counted.
+      if (previous > 0 && previous !== opening && l.line - previous > MAX_GAP) {
+        warnings.push(`${w}: lines jump from ${previous} to ${l.line}. A step shows one function or block; split it if these are two`);
+      }
+      opening ||= l.line;
       previous = l.line;
       const actual = lines[l.line - 1].trim();
       if (actual !== l.text.trim()) {
         const found = lines.findIndex(x => x.trim() === l.text.trim());
         const hint = found >= 0 ? ` That text is on line ${found + 1}.` : '';
         errors.push(`${lw}: ${step.file}:${l.line} is "${actual}", not "${l.text.trim()}".${hint}`);
+      }
+    }
+    // A step opens with the signature of its function. Checked only when the step is named after
+    // a function (Class.method, function); callbacks and top-level blocks carry free-form labels.
+    if (/^[\w$]+(\.[\w$]+)*$/.test(step.name ?? '')) {
+      const fn = step.name.split('.').pop();
+      const opening = step.lines.filter(l => l.kind !== 'del' && typeof l.text === 'string').slice(0, 3);
+      if (opening.length && !opening.some(l => new RegExp(`(^|[^\\w$])${fn.replace(/\$/g, '\\$')}([^\\w$]|$)`).test(l.text))) {
+        warnings.push(`${w}: the excerpt does not open with the signature of ${fn}. Show the signature line first`);
       }
     }
     const changedLines = step.lines.filter(l => l.kind === 'add' || l.kind === 'del').length;

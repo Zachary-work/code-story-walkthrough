@@ -56,6 +56,7 @@ numbers are 1-based.
           "deletions": 1,
           "summary": "Adds the promo's percentage on top of any loyalty discount, and caps the total at the subtotal.",
           "lines": [
+            { "line": 52, "kind": "context", "text": "public Money apply(PricingContext ctx, Money subtotal) {" },
             { "line": 53, "kind": "context", "text": "Money discount = loyaltyDiscount(ctx.customer(), subtotal);" },
             { "line": 54, "kind": "add", "text": "Promo promo = ctx.promo();" },
             { "line": 55, "kind": "add", "text": "if (promo != null) {" },
@@ -106,20 +107,20 @@ numbers are 1-based.
 | `title` | yes | Short, starts with a verb: "Reject expired or used-up codes". |
 | `goal` | yes | One or two sentences on the outcome for the user or caller. |
 | `entryPoint` | recommended | How the path is triggered: `POST /api/checkout/quote`, `Event OrderPlaced`, `CLI sync --all`. |
-| `steps` | yes | One per method, in call order, entry point first. |
+| `steps` | yes | One per function or method, in call order, entry point first. A call to another method of the same class is its own step. |
 
 ### Step
 
 | Field | Required | Meaning |
 | --- | --- | --- |
 | `id` | yes | Unique within the story. |
-| `name` | yes | `Class.method`, `module.function` or `function`. Shown as the step title. |
+| `name` | yes | The one function this step shows: `Class.method`, `module.function`, `function`, or a short label for a callback or a top-level block. Shown as the step title. |
 | `file` | yes | File that holds the method. |
 | `focusLine` | yes | Line the editor lands on. |
 | `changed` | yes | `true` if this change touches the method. |
 | `additions`, `deletions` | if changed | Line counts for this method. Default to the number of `add` and `del` lines. |
 | `summary` | if changed | One sentence on what the change does here. |
-| `lines` | yes | The excerpt to show. See below. |
+| `lines` | yes | The excerpt to show, all from inside that one function, opening with its signature line. See below. |
 | `sample` | recommended | `{ source, test?, input, output, note? }`. `source` is `"test"` or `"generated"`. `input` and `output` are plain text; use `\n` for line breaks. |
 | `participant` | optional | Box in the sequence diagram. Defaults to `name` up to the last dot. |
 | `call` | optional | Arrow label. Defaults to the method name plus `()`. |

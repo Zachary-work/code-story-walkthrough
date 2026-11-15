@@ -222,11 +222,24 @@
 
   function stepCard(story, step, i) {
     const selected = i === state.stepIndex;
+    // The excerpt leaves lines out. Say so wherever it does, so two blocks are not read as one.
+    let shown = 0;
     const lines = step.lines.map(l => {
       const target = l.line ?? l.at ?? step.focusLine;
+      const at = l.line ?? l.at;
+      const skipped = shown && at ? at - shown - 1 : 0;
+      if (at) {
+        // A removed line sits just before `at`, so it does not use up a line number itself.
+        shown = l.line ? at : at - 1;
+      }
+      const gap = skipped > 0
+        ? `<button class="gap" data-a="step" data-i="${i}" data-line="${at - skipped}" title="Open the file at the lines that are not shown">
+            <span class="no">⋮</span><span>${plural(skipped, 'line', 'lines')} not shown</span>
+          </button>`
+        : '';
       const active = selected && l.kind !== 'del' && l.line === state.line;
       const sign = l.kind === 'add' ? '+' : l.kind === 'del' ? '−' : ' ';
-      return `<button class="line ${l.kind}${active ? ' active' : ''}" data-a="step" data-i="${i}" data-line="${target}">
+      return `${gap}<button class="line ${l.kind}${active ? ' active' : ''}" data-a="step" data-i="${i}" data-line="${target}">
         <span class="no">${l.line ?? ''}</span><span class="sign">${sign}</span><span class="text">${esc(l.text) || ' '}</span>
       </button>`;
     });

@@ -104,6 +104,9 @@ button:disabled { opacity: 0.45; cursor: default; }
 .line.del .sign { color: var(--vscode-charts-red, inherit); }
 .line.call { background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 170, 60, 0.25)); }
 .line.active { outline: 1px solid var(--vscode-focusBorder); }
+.gap { display: flex; min-width: 100%; width: max-content; margin: 2px 0; padding: 1px 0; font-size: 0.85em; line-height: 1.5; color: var(--muted); border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(128, 128, 128, 0.08) 6px 12px); outline-offset: -1px; }
+.gap:hover { color: var(--vscode-foreground); background-color: var(--vscode-list-hoverBackground); }
+.gap .no { flex: none; width: 4ch; padding: 0 8px; margin-right: 2ch; text-align: right; font-family: var(--mono); user-select: none; }
 
 .sample { display: flex; flex-direction: column; gap: 8px; }
 .sample-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px; }

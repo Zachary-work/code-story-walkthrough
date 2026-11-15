@@ -3,7 +3,11 @@
   "title": "Promo codes at checkout",
   "base": "main",
   "head": "feature/promo-codes",
-  "stats": { "files": 5, "additions": 18, "deletions": 2 },
+  "stats": {
+    "files": 5,
+    "additions": 18,
+    "deletions": 2
+  },
   "stories": [
     {
       "id": "apply-promo",
@@ -18,9 +22,21 @@
           "focusLine": 5,
           "changed": false,
           "lines": [
-            { "line": 4, "kind": "context", "text": "function quote(req, res) {" },
-            { "line": 5, "kind": "call", "text": "  const result = buildQuote(req.body);" },
-            { "line": 6, "kind": "context", "text": "  res.json(result);" }
+            {
+              "line": 4,
+              "kind": "context",
+              "text": "function quote(req, res) {"
+            },
+            {
+              "line": 5,
+              "kind": "call",
+              "text": "  const result = buildQuote(req.body);"
+            },
+            {
+              "line": 6,
+              "kind": "context",
+              "text": "  res.json(result);"
+            }
           ],
           "sample": {
             "source": "generated",
@@ -39,13 +55,47 @@
           "deletions": 1,
           "summary": "Looks up the promo code from the request and attaches it to the pricing context before pricing runs.",
           "lines": [
-            { "line": 6, "kind": "context", "text": "const cart = carts.getById(request.cartId);" },
-            { "line": null, "at": 7, "kind": "del", "text": "const ctx = { cart, customer: cart.customer };" },
-            { "line": 7, "kind": "add", "text": "let ctx = { cart, customer: cart.customer };" },
-            { "line": 8, "kind": "add", "text": "if (request.promoCode) {" },
-            { "line": 9, "kind": "add", "text": "  ctx = { ...ctx, promo: promos.findActive(request.promoCode) };" },
-            { "line": 10, "kind": "add", "text": "}" },
-            { "line": 11, "kind": "call", "text": "return price(ctx);" }
+            {
+              "line": 5,
+              "kind": "context",
+              "text": "function buildQuote(request) {"
+            },
+            {
+              "line": 6,
+              "kind": "context",
+              "text": "const cart = carts.getById(request.cartId);"
+            },
+            {
+              "line": null,
+              "at": 7,
+              "kind": "del",
+              "text": "const ctx = { cart, customer: cart.customer };"
+            },
+            {
+              "line": 7,
+              "kind": "add",
+              "text": "let ctx = { cart, customer: cart.customer };"
+            },
+            {
+              "line": 8,
+              "kind": "add",
+              "text": "if (request.promoCode) {"
+            },
+            {
+              "line": 9,
+              "kind": "add",
+              "text": "  ctx = { ...ctx, promo: promos.findActive(request.promoCode) };"
+            },
+            {
+              "line": 10,
+              "kind": "add",
+              "text": "}"
+            },
+            {
+              "line": 11,
+              "kind": "call",
+              "text": "return price(ctx);"
+            }
           ],
           "sample": {
             "source": "test",
@@ -61,10 +111,31 @@
           "focusLine": 8,
           "changed": false,
           "lines": [
-            { "line": 6, "kind": "context", "text": "const subtotal = ctx.cart.items.reduce((sum, item) => sum + item.price * item.qty, 0);" },
-            { "line": 7, "kind": "context", "text": "// Order matters: discounts first, then tax on what is left." },
-            { "line": 8, "kind": "call", "text": "const discount = applyDiscount(ctx, subtotal);" },
-            { "line": 9, "kind": "context", "text": "const taxable = subtotal - discount;" }
+            {
+              "line": 5,
+              "kind": "context",
+              "text": "function price(ctx) {"
+            },
+            {
+              "line": 6,
+              "kind": "context",
+              "text": "const subtotal = ctx.cart.items.reduce((sum, item) => sum + item.price * item.qty, 0);"
+            },
+            {
+              "line": 7,
+              "kind": "context",
+              "text": "// Order matters: discounts first, then tax on what is left."
+            },
+            {
+              "line": 8,
+              "kind": "call",
+              "text": "const discount = applyDiscount(ctx, subtotal);"
+            },
+            {
+              "line": 9,
+              "kind": "context",
+              "text": "const taxable = subtotal - discount;"
+            }
           ],
           "sample": {
             "source": "generated",
@@ -83,13 +154,47 @@
           "deletions": 1,
           "summary": "Adds the promo's percentage on top of any loyalty discount, and caps the total discount at the subtotal.",
           "lines": [
-            { "line": 4, "kind": "context", "text": "let discount = subtotal * LOYALTY_RATES[ctx.customer.tier];" },
-            { "line": 5, "kind": "add", "text": "const promo = ctx.promo;" },
-            { "line": 6, "kind": "add", "text": "if (promo) {" },
-            { "line": 7, "kind": "add", "text": "  discount += subtotal * (promo.percentOff / 100);" },
-            { "line": 8, "kind": "add", "text": "}" },
-            { "line": null, "at": 9, "kind": "del", "text": "return discount;" },
-            { "line": 9, "kind": "add", "text": "return Math.min(discount, subtotal);" }
+            {
+              "line": 3,
+              "kind": "context",
+              "text": "function applyDiscount(ctx, subtotal) {"
+            },
+            {
+              "line": 4,
+              "kind": "context",
+              "text": "let discount = subtotal * LOYALTY_RATES[ctx.customer.tier];"
+            },
+            {
+              "line": 5,
+              "kind": "add",
+              "text": "const promo = ctx.promo;"
+            },
+            {
+              "line": 6,
+              "kind": "add",
+              "text": "if (promo) {"
+            },
+            {
+              "line": 7,
+              "kind": "add",
+              "text": "  discount += subtotal * (promo.percentOff / 100);"
+            },
+            {
+              "line": 8,
+              "kind": "add",
+              "text": "}"
+            },
+            {
+              "line": null,
+              "at": 9,
+              "kind": "del",
+              "text": "return discount;"
+            },
+            {
+              "line": 9,
+              "kind": "add",
+              "text": "return Math.min(discount, subtotal);"
+            }
           ],
           "sample": {
             "source": "test",
@@ -117,9 +222,36 @@
           "deletions": 1,
           "summary": "Only looks up a promo when the request carries a code.",
           "lines": [
-            { "line": 8, "kind": "add", "text": "if (request.promoCode) {" },
-            { "line": 9, "kind": "call", "text": "  ctx = { ...ctx, promo: promos.findActive(request.promoCode) };" },
-            { "line": 10, "kind": "add", "text": "}" }
+            {
+              "line": 5,
+              "kind": "context",
+              "text": "function buildQuote(request) {"
+            },
+            {
+              "line": 6,
+              "kind": "context",
+              "text": "const cart = carts.getById(request.cartId);"
+            },
+            {
+              "line": 7,
+              "kind": "add",
+              "text": "let ctx = { cart, customer: cart.customer };"
+            },
+            {
+              "line": 8,
+              "kind": "add",
+              "text": "if (request.promoCode) {"
+            },
+            {
+              "line": 9,
+              "kind": "call",
+              "text": "  ctx = { ...ctx, promo: promos.findActive(request.promoCode) };"
+            },
+            {
+              "line": 10,
+              "kind": "add",
+              "text": "}"
+            }
           ],
           "sample": {
             "source": "generated",
@@ -138,13 +270,41 @@
           "deletions": 0,
           "summary": "New function. Returns the promo for a code, or throws when the code is unknown or past its expiry date.",
           "lines": [
-            { "line": 3, "kind": "add", "text": "function findActive(code) {" },
-            { "line": 4, "kind": "add", "text": "  const promo = PROMOS[code];" },
-            { "line": 5, "kind": "add", "text": "  if (!promo || new Date(promo.expires) < new Date()) {" },
-            { "line": 6, "kind": "add", "text": "    throw new Error(`Promo code ${code} is not valid`);" },
-            { "line": 7, "kind": "add", "text": "  }" },
-            { "line": 8, "kind": "add", "text": "  return promo;" },
-            { "line": 9, "kind": "add", "text": "}" }
+            {
+              "line": 3,
+              "kind": "add",
+              "text": "function findActive(code) {"
+            },
+            {
+              "line": 4,
+              "kind": "add",
+              "text": "  const promo = PROMOS[code];"
+            },
+            {
+              "line": 5,
+              "kind": "add",
+              "text": "  if (!promo || new Date(promo.expires) < new Date()) {"
+            },
+            {
+              "line": 6,
+              "kind": "add",
+              "text": "    throw new Error(`Promo code ${code} is not valid`);"
+            },
+            {
+              "line": 7,
+              "kind": "add",
+              "text": "  }"
+            },
+            {
+              "line": 8,
+              "kind": "add",
+              "text": "  return promo;"
+            },
+            {
+              "line": 9,
+              "kind": "add",
+              "text": "}"
+            }
           ],
           "sample": {
             "source": "test",
@@ -159,7 +319,10 @@
   "unstoried": {
     "summary": "Sample cart data used by the tests.",
     "files": [
-      { "path": "src/carts.js", "reason": "Sample cart data only; the promo code path reads carts but its logic did not change" }
+      {
+        "path": "src/carts.js",
+        "reason": "Sample cart data only; the promo code path reads carts but its logic did not change"
+      }
     ]
   }
 }
