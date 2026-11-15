@@ -15,18 +15,29 @@ Two parts work together through files in `.stories/`:
 1. Ask your agent: **"Create code stories for this branch"**. It writes the stories into a folder
    of their own, `.stories/<branch>/stories.json`. Ask again after more work on the same branch and
    it refreshes that same set; work on another branch gets another set (see [Story sets](#story-sets)).
-2. Run **Code Stories: Open Story Panel**. Pick a story, then step through it. Clicking a line,
-   an arrow in the sequence diagram or a class opens that file at that line in the editor.
-   The overview also accounts for every changed file. Files that are on no story's path are listed
-   under **Changes not in a story**, grouped by the reason they were left out; click one to see its
-   diff. A changed file that the stories file does not mention at all is flagged as missing.
+2. Run **Code Stories: Open Story Panel**. The overview has four counters, and each one is a tab:
+   - **Stories reviewed** lists the stories, with what each one still needs from you.
+   - **Lines not seen** accounts for every changed line: how many a story shows, how many are in
+     the stories' tests, how many are in files left out with a reason, and which ones are shown
+     nowhere. Click a file to see those lines in the diff.
+   - **Tests** lists the tests each story names, and the stories that have none.
+   - **Comments** holds your review threads and the pull request link.
+
+   Open a story and step through it. Its tabs are **Steps** (one function at a time, the others
+   folded to a line), **Look closely** (what the agent was least sure about), **Tests**,
+   **Diagram** and **Comments**. Clicking a line opens that file at that line in the editor.
+   A step tells you when its code no longer matches the file, when its excerpt leaves out
+   changed lines, when it has no test, and when it shows code the change removed.
 3. To comment, select lines in the editor and use the plus in the gutter.
    - **Comment locally** saves to `comments.json` next to the stories, for your agent.
    - **Comment on PR** posts a review comment to the linked GitHub pull request (needs the
      [`gh` CLI](https://cli.github.com), signed in).
 4. Ask your agent: **"Read and address my review comments"**. It replies in each thread and either
    makes the change, declines with a reason, or answers the question. The thread updates in place.
-5. Mark each story reviewed. A story's mark is cleared only if that story's content changes.
+5. Mark each story reviewed. If a story changes afterwards, for example because the agent fixed
+   something you commented on, it shows as **Changed since review**: the steps that changed are
+   marked, and the lines you have not read carry a bar. Code that only moved does not count.
+6. **Copy review summary** on the overview gives you the state of the review as text.
 
 ## Try it
 
@@ -48,9 +59,10 @@ workspace, `.agents/skills`, or `~/.claude/skills`). Or copy `skill/code-stories
 The skill includes three scripts the agent runs with Node:
 
 - `scripts/sets.mjs` lists the story sets and prints the folder a set is written to.
-- `scripts/validate.mjs` checks `stories.json`: structure, that every quoted line matches the file
-  at that line number, and that every changed file is in a story or listed as "not in a story"
-  with a reason.
+- `scripts/validate.mjs` checks `stories.json` against the working tree and `git diff`: structure,
+  that every quoted line matches the file at that line number, that no changed line is passed
+  off as unchanged, that the tests it names exist, and that every changed file is in a story or
+  left out with a reason. It reports how many changed lines the steps show.
 - `scripts/comments.mjs` lists waiting comments and records replies.
 
 The file formats are documented in `skill/code-stories/references/schema.md`.

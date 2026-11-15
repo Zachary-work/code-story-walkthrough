@@ -89,8 +89,21 @@ and step `id`s where the story is still the same one, and leaving its `comments.
    - Include unchanged methods that sit between the entry point and the change. Show only a few
      lines of them: the signature, and the line that makes the next call, marked
      `call`.
-   - For changed methods, show the added lines (`add`), the removed lines (`del`), and enough
-     `context` lines to read them. This is an excerpt, not the whole method.
+   - For changed methods, show every added or modified line (`add`), the removed lines (`del`),
+     and enough `context` lines to read them. Unchanged stretches may be left out; changed lines
+     may not. A changed line that no step shows is outside every story, and the panel reports it
+     to the reviewer as "not seen". If a changed function is on no story's path, it needs a
+     story of its own.
+   - The kind of each line must agree with the diff. A line that is new or modified in this
+     change is `add`, even when it is the function's signature or the line that calls the next
+     step. For an added line that makes the next call, write `"kind": "add", "calls": true`.
+     `context` and `call` are only for lines the change did not touch. The validator checks
+     this against `git diff`.
+   - A function the change deleted is a step too, when removing it changes the behaviour the
+     story is about. Set `"removed": true` and `"changed": true`, give `file` as the path it
+     had, and make every line `{ "line": null, "was": <line number in the base version>,
+     "kind": "del", "text": ... }`, opening with its signature. Read it with
+     `git show <merge-base>:<path>`.
    - Every step opens with the signature of its unit, changed or not: the line that declares
      the function, method, constructor or getter, or the line that defines the callback
      (`router.post('/quote', async (req, res) => {`). Mark it `context` when it did not change.
@@ -113,7 +126,21 @@ and step `id`s where the story is still the same one, and leaving its `comments.
    - If no test covers it, derive values from the types and the upstream samples, set `source`
      to `"generated"`, and say so in `note`. Never name a test that does not exist.
 
-6. **Account for everything else.** List the changed files (`git diff --name-only <merge-base>`,
+6. **Name the tests, and say where to look closely.** Both go on the story.
+   - `tests`: the tests that exercise this story, each with `name`, `file`, `line` and `steps`
+     (the ids of the steps it covers). Find them by searching the test files for calls into the
+     story's functions. Include tests the change added and existing ones that still cover the
+     path. List only tests that exist. If a story has none, leave `tests` empty: the panel
+     tells the reviewer the story is untested, which is what they need to know.
+   - Test files that the change touched and that you list here do not go in `unstoried`; a test
+     file no story names does, with its reason.
+   - `risks`: zero to three things per story that deserve a careful look, each `{ "text",
+     "step" }` pointing at the step it is about. Write what you were least sure of: an edge
+     case that is not handled, behaviour the request did not specify, a race, a migration that
+     cannot be undone, a changed default. One or two plain sentences, stating the concern, not
+     reassurance. Leave it empty when there is nothing; do not invent concerns.
+
+7. **Account for everything else.** List the changed files (`git diff --name-only <merge-base>`,
    plus untracked files from `git status`). Every one must be in a story or in
    `unstoried.files`, so nothing in the change goes unseen. The panel shows the unstoried files
    in their own section, grouped by `reason`, and flags any changed file you left out of both.
@@ -128,12 +155,15 @@ and step `id`s where the story is still the same one, and leaving its `comments.
      new story for it.
    - `unstoried.summary` is one sentence describing these files as a whole.
 
-7. **Validate, then fix.** Run `node <skill>/scripts/validate.mjs` (add `--set <name>` when the
-   set is not named after the branch). It prints which set it checked. It checks the structure, that
-   every line's text matches the file at that line number, and that every changed file is
-   accounted for. Fix every error and re-run until it passes. Treat warnings as things to look at.
+8. **Validate, then fix.** Run `node <skill>/scripts/validate.mjs` (add `--set <name>` when the
+   set is not named after the branch). It prints which set it checked. It checks the structure,
+   that every line's text matches the file at that line number, that each line's kind agrees
+   with the diff, that the tests you named exist, and that every changed file is accounted for.
+   It also prints how many changed lines the steps show and warns about each file with changed
+   lines in no step. Fix every error and re-run until it passes. Treat warnings as work to do:
+   aim for every changed line of a storied file to be shown.
 
-8. **Tell the user** how many stories you wrote, which set they are in and whether you created
+9. **Tell the user** how many stories you wrote, which set they are in and whether you created
    or refreshed it, and to run "Code Stories: Open Story Panel" in VS Code. If `.stories/` is not ignored by git, mention that they may want to add it to
    `.gitignore`.
 

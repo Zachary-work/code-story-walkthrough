@@ -14,6 +14,30 @@
       "title": "Apply a promo code to a checkout quote",
       "goal": "A shopper can enter a promo code at checkout and see the discounted total before paying. Tax is charged on the discounted amount.",
       "entryPoint": "POST /api/checkout/quote",
+      "tests": [
+        {
+          "name": "applies promo code",
+          "file": "test/checkout.test.js",
+          "line": 7,
+          "steps": [
+            "service"
+          ]
+        },
+        {
+          "name": "promo percent off",
+          "file": "test/checkout.test.js",
+          "line": 12,
+          "steps": [
+            "calculator"
+          ]
+        }
+      ],
+      "risks": [
+        {
+          "text": "The promo is added on top of the loyalty discount with no cap, so a large promo plus a loyalty tier could take off more than the subtotal.",
+          "step": "calculator"
+        }
+      ],
       "steps": [
         {
           "id": "controller",
@@ -211,6 +235,22 @@
       "title": "Reject unknown or expired codes",
       "goal": "A code that does not exist or has expired is refused with a clear error, so the shopper is never quoted a discount they cannot use.",
       "entryPoint": "POST /api/checkout/quote",
+      "tests": [
+        {
+          "name": "rejects unknown code",
+          "file": "test/checkout.test.js",
+          "line": 17,
+          "steps": [
+            "promos"
+          ]
+        }
+      ],
+      "risks": [
+        {
+          "text": "An expired code and an unknown code give the same message. No test covers the expired case.",
+          "step": "promos"
+        }
+      ],
       "steps": [
         {
           "id": "service",

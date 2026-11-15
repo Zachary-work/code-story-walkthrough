@@ -32,8 +32,34 @@ export class EditorFollower implements vscode.Disposable {
       return;
     }
     const wanted = this.session.line || step.focusLine;
+    if (step.removed) {
+      await this.openBase(step.file, wanted);
+      return;
+    }
     const text = step.lines.find(l => l.line === wanted)?.text;
     await this.open(step.file, wanted, wanted, text);
+  }
+
+  /** Shows a file as it was at the base of the stories, for code this change removed. */
+  async openBase(file: string, line: number): Promise<void> {
+    const store = this.session.store;
+    const base = store.doc?.baseSha ?? store.doc?.base;
+    const git = vscode.extensions.getExtension('vscode.git');
+    if (!base || !git) {
+      void vscode.window.showWarningMessage(`Code Stories: ${file} was removed, and its earlier version could not be read from git.`);
+      return;
+    }
+    const api = (git.isActive ? git.exports : await git.activate()).getAPI(1);
+    const at = new vscode.Position(Math.max(0, line - 1), 0);
+    try {
+      await vscode.window.showTextDocument(api.toGitUri(vscode.Uri.file(store.abs(file)), base), {
+        viewColumn: vscode.ViewColumn.One,
+        preserveFocus: true,
+        selection: new vscode.Range(at, at)
+      });
+    } catch {
+      void vscode.window.showWarningMessage(`Code Stories: ${file} could not be read at ${store.doc?.base ?? base}.`);
+    }
   }
 
   /** Opens a workspace file in the first editor column with the given 1-based lines selected. */
@@ -102,7 +128,8 @@ export class EditorFollower implements vscode.Disposable {
             const range = new vscode.Range(n - 1, 0, n - 1, 0);
             if (l.kind === 'add') {
               added.push(range);
-            } else {
+            }
+            if (l.kind === 'call' || l.calls) {
               calls.push({ range, renderOptions: { after: calleeHint(story, index) } });
             }
           }

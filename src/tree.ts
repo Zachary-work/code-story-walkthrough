@@ -38,7 +38,7 @@ export class StoryTree implements vscode.TreeDataProvider<Node>, vscode.Disposab
     const reviewed = this.session.isReviewed(story);
     const changed = story.steps.filter(s => s.changed).length;
     const item = new vscode.TreeItem(`${index + 1}. ${story.title}`);
-    item.description = `${reviewed ? 'Reviewed · ' : ''}${story.steps.length} methods, ${changed} changed`;
+    item.description = `${reviewed ? 'Reviewed · ' : this.session.status(story) === 'changed' ? 'Changed since review · ' : ''}${story.steps.length} functions, ${changed} changed`;
     item.tooltip = story.goal;
     item.iconPath = new vscode.ThemeIcon(reviewed ? 'pass-filled' : 'circle-large-outline');
     item.command = { command: 'codeStories.openStory', title: 'Open story', arguments: [index] };

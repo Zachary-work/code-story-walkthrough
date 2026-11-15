@@ -88,7 +88,6 @@ button:disabled { opacity: 0.45; cursor: default; }
 .steps { display: flex; flex-direction: column; gap: 6px; }
 .step-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .step-head h2 { flex: 1 1 160px; }
-.calls { display: flex; align-items: center; gap: 8px; padding-left: 18px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .code { border: 1px solid var(--line); border-radius: 4px; background: var(--vscode-editor-background); overflow-x: auto; padding: 4px 0; }
@@ -152,3 +151,64 @@ input { box-sizing: border-box; width: 100%; min-height: 28px; padding: 3px 8px;
 /* Story set switcher */
 .setbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .setbar select { flex: 1 1 180px; min-width: 0; min-height: 28px; padding: 3px 6px; font: inherit; color: var(--vscode-dropdown-foreground, var(--vscode-foreground)); background: var(--vscode-dropdown-background, var(--vscode-input-background)); border: 1px solid var(--vscode-dropdown-border, var(--line)); border-radius: 4px; }
+
+/* Tabs and counters */
+.accent { color: var(--accent-text); }
+.del { color: var(--vscode-charts-red, var(--vscode-editorError-foreground)); }
+.grow1 { flex: 1 1 0; }
+.counters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.counter { box-sizing: border-box; min-height: 64px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; }
+.counter:hover { border-color: var(--vscode-focusBorder); }
+.counter.on { border-color: var(--vscode-focusBorder); background: var(--vscode-list-inactiveSelectionBackground, var(--card)); }
+.counter .value { font-size: 1.45em; font-weight: 600; line-height: 1.2; }
+.counter .label { color: var(--muted); overflow-wrap: anywhere; }
+.counter.on .label { color: var(--vscode-foreground); }
+.tabs { display: flex; flex-wrap: wrap; gap: 0 2px; border-bottom: 1px solid var(--line); }
+.tab { padding: 6px 10px; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--muted); white-space: nowrap; }
+.tab:hover { color: var(--vscode-foreground); }
+.tab.on { color: var(--vscode-foreground); font-weight: 600; border-bottom-color: var(--vscode-focusBorder); }
+.tab .count { font-weight: 400; }
+.tab.warn .count { color: var(--vscode-charts-orange, var(--vscode-editorWarning-foreground)); font-weight: 600; }
+
+.row.story { align-items: center; }
+.state { flex: none; white-space: nowrap; color: var(--muted); }
+.state.reviewed { color: var(--vscode-charts-green, var(--vscode-testing-iconPassed)); }
+.state.changed { color: var(--accent-text); }
+.row.test { padding: 8px 12px; }
+
+.cover { display: flex; gap: 2px; height: 8px; border-radius: 4px; overflow: hidden; }
+.cover .in, .legend i.in { background: var(--accent); }
+.cover .tests, .legend i.tests { background: var(--vscode-charts-green, var(--vscode-testing-iconPassed)); }
+.cover .out, .legend i.out { background: var(--muted); }
+.cover .no, .legend i.no { background: var(--vscode-charts-orange, var(--vscode-editorWarning-foreground)); }
+.legend { display: flex; flex-direction: column; gap: 2px; }
+.legend span { display: flex; align-items: center; gap: 8px; }
+.legend i { flex: none; width: 10px; height: 10px; border-radius: 2px; }
+.file.split { display: flex; flex-wrap: wrap; gap: 0 12px; justify-content: space-between; align-items: baseline; }
+
+.banner.split { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.notice { padding: 6px 10px; border: 1px solid var(--line); border-radius: 4px; }
+.notice.warn { color: inherit; border-color: var(--vscode-charts-orange, var(--vscode-editorWarning-foreground)); }
+.notice.warn .strong { color: var(--vscode-charts-orange, var(--vscode-editorWarning-foreground)); }
+.notice.accent { color: inherit; border-color: var(--accent-text); }
+.notice.accent .strong { color: var(--accent-text); }
+
+.row.steprow { align-items: center; gap: 10px; padding: 7px 12px; }
+.steprow.quiet { background: none; }
+.steprow.quiet .name { color: var(--muted); }
+.steprow .name { flex: 1 1 140px; min-width: 0; overflow-wrap: anywhere; font-size: 0.95em; }
+.flags { display: flex; flex-wrap: wrap; gap: 2px 10px; justify-content: flex-end; }
+.flag { white-space: nowrap; }
+.struck { text-decoration: line-through; }
+.num.removed { background: var(--vscode-charts-red, var(--vscode-editorError-foreground)); color: var(--vscode-editor-background); border-color: transparent; }
+.chip.removed { color: var(--vscode-charts-red, var(--vscode-editorError-foreground)); border-color: currentColor; }
+.tests { display: flex; flex-wrap: wrap; gap: 8px; }
+.risk { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--vscode-charts-orange, var(--vscode-editorWarning-foreground)); border-radius: 6px; background: var(--card); }
+.risk .btn { flex: none; }
+
+.line.stale { background: var(--vscode-inputValidation-warningBackground, rgba(234, 170, 60, 0.25)); }
+.line.stale .no, .line.stale .sign { color: var(--vscode-charts-orange, var(--vscode-editorWarning-foreground)); font-weight: 600; }
+.line.fresh { box-shadow: inset 3px 0 0 var(--accent-text); }
+.line.makes-call { box-shadow: inset -3px 0 0 var(--vscode-charts-yellow, rgba(234, 170, 60, 0.9)); }
+.line.fresh.makes-call { box-shadow: inset 3px 0 0 var(--accent-text), inset -3px 0 0 var(--vscode-charts-yellow, rgba(234, 170, 60, 0.9)); }
+.gap.warn { color: var(--vscode-charts-orange, var(--vscode-editorWarning-foreground)); border-color: currentColor; font-weight: 600; }
