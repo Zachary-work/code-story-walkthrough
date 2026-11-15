@@ -3,12 +3,16 @@
 // Usage (from the workspace root):
 //   node comments.mjs list
 //   node comments.mjs reply <id> <changed|declined|answered> "<text>"   (text "-" reads stdin)
+// Add --set <name> to work on a set other than the current branch's.
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveSet, takeSetOption } from './sets.mjs';
 
 const root = process.cwd();
-const file = path.join(root, '.stories', 'comments.json');
-const [command, ...args] = process.argv.slice(2);
+const options = takeSetOption(process.argv.slice(2));
+const set = resolveSet(root, options.set);
+const file = path.join(set.dir, 'comments.json');
+const [command, ...args] = options.rest;
 
 function load() {
   if (!fs.existsSync(file)) {
@@ -46,7 +50,7 @@ function locate(c) {
 if (command === 'list') {
   const waiting = load().comments.filter(isWaiting);
   if (!waiting.length) {
-    console.log('No local comments are waiting.');
+    console.log(`No local comments are waiting in story set "${set.id}".`);
     process.exit(0);
   }
   for (const c of waiting) {
@@ -64,7 +68,7 @@ if (command === 'list') {
     }
     console.log('');
   }
-  console.log(`${waiting.length} waiting. Reply with: node comments.mjs reply <id> <changed|declined|answered> "<text>"`);
+  console.log(`${waiting.length} waiting in story set "${set.id}". Reply with: node comments.mjs reply <id> <changed|declined|answered> "<text>"`);
 } else if (command === 'reply') {
   const [id, status, ...rest] = args;
   let text = rest.join(' ');

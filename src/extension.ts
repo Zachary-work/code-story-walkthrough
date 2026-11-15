@@ -6,7 +6,7 @@ import { CommentUi } from './comments';
 import { EditorFollower } from './editor';
 import { AGENT_PROMPT, MISSING_REASON, StoryPanel } from './panel';
 import { Session } from './session';
-import { Store } from './store';
+import { DEFAULT_SET, Store, setIdFor } from './store';
 import { StoryTree } from './tree';
 
 const SKILL_NAME = 'code-stories';
@@ -42,14 +42,55 @@ export function activate(context: vscode.ExtensionContext): void {
 
   register('codeStories.open', () => panel.show());
 
-  // Opening .stories/stories.json brings up the panel beside it.
+  // Opening a set's stories.json brings up the panel beside it, showing that set.
   const showForStoriesFile = (active?: vscode.TextEditor) => {
-    if (active?.document.uri.scheme === 'file' && store.rel(active.document.uri.fsPath) === '.stories/stories.json') {
+    const rel = active?.document.uri.scheme === 'file' ? store.rel(active.document.uri.fsPath) : undefined;
+    const match = rel && /^\.stories\/(?:([^/]+)\/)?stories\.json$/.exec(rel);
+    if (match) {
+      const setId = match[1] ?? DEFAULT_SET;
+      if (setId !== store.setId) {
+        session.selectSet(setId);
+      }
       panel.show(true);
     }
   };
   context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(showForStoriesFile));
   showForStoriesFile(vscode.window.activeTextEditor);
+  register('codeStories.switchSet', async () => {
+    if (!store.sets.length) {
+      void vscode.window.showInformationMessage('There are no story sets in this workspace yet.');
+      return;
+    }
+    const own = session.branch ? setIdFor(session.branch) : undefined;
+    const pick = await vscode.window.showQuickPick(
+      store.sets.map(s => ({
+        label: s.title,
+        description: [s.id, s.id === store.setId ? 'showing' : '', s.id === own || s.head === session.branch ? 'this branch' : '']
+          .filter(Boolean)
+          .join(' · '),
+        id: s.id
+      })),
+      { title: 'Story sets', placeHolder: 'Each set is the stories and comments of one change' }
+    );
+    if (pick) {
+      session.selectSet(pick.id);
+      panel.show();
+    }
+  });
+  register('codeStories.deleteSet', async () => {
+    const set = store.sets.find(s => s.id === store.setId);
+    if (!set) {
+      return;
+    }
+    const answer = await vscode.window.showWarningMessage(
+      `Delete the story set "${set.title}"?`,
+      { modal: true, detail: `This moves ${store.rel(store.dirOf(set.id))} (its stories and review comments) to the trash.` },
+      'Delete'
+    );
+    if (answer === 'Delete') {
+      await store.deleteSet(set.id);
+    }
+  });
   register('codeStories.openStory', (index: number) => {
     panel.show();
     session.openStory(index);

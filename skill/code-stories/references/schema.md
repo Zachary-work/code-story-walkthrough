@@ -1,9 +1,15 @@
 # File formats
 
-Both files live in `.stories/` at the workspace root. All paths are relative to the workspace
-root and use forward slashes. All line numbers are 1-based.
+Each change has its own folder, a story set, in `.stories/` at the workspace root:
+`.stories/<set>/stories.json` and `.stories/<set>/comments.json`. The set is named after the
+branch (`feature/promo-codes` becomes `feature-promo-codes`), or after the change when working
+on the default branch. `scripts/sets.mjs` lists the sets and prints the folder to write to.
+Files directly in `.stories/` are the old single-file layout and count as the set `default`.
 
-## .stories/stories.json
+All paths inside the files are relative to the workspace root and use forward slashes. All line
+numbers are 1-based.
+
+## `.stories/<set>/stories.json`
 
 ```json
 {
@@ -84,7 +90,8 @@ root and use forward slashes. All line numbers are 1-based.
 | --- | --- | --- |
 | `version` | yes | Always `1`. |
 | `title` | yes | Title of the change, such as the PR title. |
-| `base`, `head` | recommended | Branch names, shown as "head compared with base". |
+| `base` | recommended | Base branch name, shown as "head compared with base". |
+| `head` | yes | The branch the stories were written on, exactly as `git branch --show-current` prints it. The extension shows this set when that branch is checked out. |
 | `baseSha` | recommended | Merge base commit. "Open diff" compares the working tree against it. |
 | `headSha` | recommended | `HEAD` when the stories were written. If `HEAD` moves, the panel says the stories are out of date. |
 | `stats` | optional | Totals for the whole change: `files`, `additions`, `deletions`. |
@@ -130,7 +137,7 @@ root and use forward slashes. All line numbers are 1-based.
 `text` is the line as it is in the file now (for `del`, as it was), with leading indentation
 optionally trimmed. Keep relative indentation inside a block so the excerpt reads as code.
 
-## .stories/comments.json
+## `.stories/<set>/comments.json`
 
 Written by the extension. You change only `status` and `messages`, and only through
 `scripts/comments.mjs`.

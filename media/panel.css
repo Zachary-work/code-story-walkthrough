@@ -145,3 +145,7 @@ input { box-sizing: border-box; width: 100%; min-height: 28px; padding: 3px 8px;
 .msg.changed .arrow-label { color: var(--accent-text); font-weight: 600; }
 .arrow.entry { align-items: flex-start; }
 .arrow.entry .arrow-label { max-width: none; }
+
+/* Story set switcher */
+.setbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.setbar select { flex: 1 1 180px; min-width: 0; min-height: 28px; padding: 3px 6px; font: inherit; color: var(--vscode-dropdown-foreground, var(--vscode-foreground)); background: var(--vscode-dropdown-background, var(--vscode-input-background)); border: 1px solid var(--vscode-dropdown-border, var(--line)); border-radius: 4px; }

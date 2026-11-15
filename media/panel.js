@@ -101,6 +101,19 @@
     </div>`;
   }
 
+  // Each change has its own set of stories and comments. Shown once there is more than one to choose from.
+  function setBar() {
+    if (state.sets.length < 2) {
+      return '';
+    }
+    const options = state.sets.map(s => `<option value="${esc(s.id)}"${s.id === state.setId ? ' selected' : ''}>${esc(s.title)} (${esc(s.id)})</option>`);
+    return `<div class="setbar">
+      <label for="setPick" class="muted small">Story set</label>
+      <select id="setPick">${options.join('')}</select>
+      <button class="btn" data-a="deleteSet">Delete set</button>
+    </div>`;
+  }
+
   function overview(doc) {
     const sub = doc.head && doc.base ? `${doc.head} compared with ${doc.base}` : doc.head || '';
     const stats = doc.stats ? `${plural(doc.stats.files, 'file', 'files')} changed, +${doc.stats.additions} −${doc.stats.deletions}` : '';
@@ -118,6 +131,7 @@
     });
     return `<div class="page">
       <div class="eyebrow">STORIES · OVERVIEW</div>
+      ${setBar()}
       <div>
         <h1>${esc(doc.title)}</h1>
         <div class="mono muted small">${esc(sub)}</div>
@@ -300,7 +314,7 @@
     const handoff = state.waiting
       ? `<div class="handoff">
           <span class="strong warn">${state.waiting === 1 ? '1 comment is waiting for your agent' : `${state.waiting} comments are waiting for your agent`}</span>
-          <span class="small">Local comments are saved in .stories/comments.json. In your agent chat, ask:</span>
+          <span class="small">Local comments are saved with the stories in .stories/. In your agent chat, ask:</span>
           <div class="prompt"><span class="mono">${esc(state.agentPrompt)}</span>${copyButton(state.agentPrompt)}</div>
           <span class="muted small">The agent replies in the thread, and either makes the change or says why not.</span>
         </div>`
@@ -320,7 +334,7 @@
     return `<div class="page">
       <div class="eyebrow">STORIES</div>
       <h1>No stories yet</h1>
-      <p class="lead">Stories are written by your AI agent into <span class="mono">.stories/stories.json</span>. Install the skill once, then ask the agent in its chat:</p>
+      <p class="lead">Stories are written by your AI agent into <span class="mono">.stories/</span>, one folder per change. Install the skill once, then ask the agent in its chat:</p>
       <div class="prompt"><span class="mono">${esc(state.createPrompt)}</span>${copyButton(state.createPrompt)}</div>
       <div><button class="btn primary" data-a="installSkill">Install agent skill</button></div>
     </div>`;
@@ -340,7 +354,10 @@
       const stale = state.stale
         ? '<div class="banner">The code has moved on since these stories were written. Ask your agent to refresh them.</div>'
         : '';
-      html = stale + (state.view === 'story' ? story(state.doc) : overview(state.doc));
+      const foreign = state.foreign
+        ? `<div class="banner">You are on branch <span class="mono">${esc(state.foreign.branch)}</span>. These stories were written for <span class="mono">${esc(state.foreign.writtenFor)}</span>.</div>`
+        : '';
+      html = foreign + stale + (state.view === 'story' ? story(state.doc) : overview(state.doc));
     }
     root.innerHTML = html;
     const samePage = last.view === state.view && last.story === state.storyIndex;
@@ -375,6 +392,7 @@
       case 'diff': return post({ type: 'openDiff', index: Number(d.i) });
       case 'file': return post({ type: 'openFile', index: Number(d.i) });
       case 'reviewed': return post({ type: 'toggleReviewed' });
+      case 'deleteSet': return post({ type: 'deleteSet' });
       case 'unstoriedFile': return post({ type: 'openUnstoried', path: d.path });
       case 'comment': return post({ type: 'openComment', id: d.id });
       case 'unlinkPr': return post({ type: 'unlinkPr' });
@@ -391,6 +409,12 @@
         post({ type: 'copy', text: d.text });
         local.copied = d.text;
         return render();
+    }
+  });
+
+  root.addEventListener('change', event => {
+    if (event.target.id === 'setPick') {
+      post({ type: 'selectSet', id: event.target.value });
     }
   });
 

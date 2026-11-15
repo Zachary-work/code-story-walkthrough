@@ -1,6 +1,6 @@
 ---
 name: code-stories
-description: Write and maintain code stories for the Code Story Walkthrough VS Code extension, and answer the reviewer's comments from it. Use when the user asks to create, generate or refresh stories for a branch, pull request or diff ("create code stories for this branch", "turn this PR into stories"), or to read, address or reply to their review comments ("read and address my review comments"), or mentions .stories/stories.json or .stories/comments.json.
+description: Write and maintain code stories for the Code Story Walkthrough VS Code extension, and answer the reviewer's comments from it. Use when the user asks to create, generate or refresh stories for a branch, pull request or diff ("create code stories for this branch", "turn this PR into stories"), or to read, address or reply to their review comments ("read and address my review comments"), or mentions story sets, .stories/, stories.json or comments.json.
 ---
 
 # Code stories
@@ -9,15 +9,42 @@ The Code Story Walkthrough extension lets a person review a change as a set of s
 starts at an entry point (a route, an event handler, a command) and follows the calls down to the
 code that changed, so the reviewer reads the change in the order it runs instead of file by file.
 
-You have two jobs, both done by reading and writing files in `.stories/` at the workspace root:
+You have two jobs, both done by reading and writing files in `.stories/` at the workspace root.
+Each change has its own folder there, called a story set, so stories for unrelated changes never
+overwrite each other:
 
 | The user asks to... | You do | File |
 | --- | --- | --- |
-| create or refresh stories | [Write stories](#write-stories) | `.stories/stories.json` |
-| read or address review comments | [Address comments](#address-comments) | `.stories/comments.json` |
+| create or refresh stories | [Write stories](#write-stories) | `.stories/<set>/stories.json` |
+| read or address review comments | [Address comments](#address-comments) | `.stories/<set>/comments.json` |
 
 The exact file formats are in `references/schema.md`. Read it before writing either file.
 The scripts are in this skill's `scripts/` directory; run them with `node` from the workspace root.
+
+## Choose the story set
+
+Do this first, before writing stories. Run `node <skill>/scripts/sets.mjs list`. It prints the
+current branch and every existing set with its title, the branch it was written on, and the
+files its stories cover.
+
+- **The user names a set** ("refresh the promo-codes stories", "create stories called
+  checkout-refactor"): use that one. `node <skill>/scripts/sets.mjs path <name>` prints its folder.
+- **On a feature branch:** the set is named after the branch, and `sets.mjs path` prints its
+  folder. If it exists, this is follow-up work: refresh it in place. If it does not, create it.
+- **On the default branch** (`main`, `master`), unrelated changes follow each other on one
+  branch, so the branch cannot name the set. Name it after the change instead, in kebab-case
+  (`sets.mjs path promo-codes`). When sets written on this branch already exist:
+  - Refresh an existing set if the user says this is a follow-up, or if the work clearly
+    continues it: the same feature, and the changed files overlap the files that set covers.
+  - Create a new set if the change is clearly something else.
+  - If you cannot tell, ask the user: "Is this a follow-up to <title>, or a new change?" Do not
+    guess. A wrong guess overwrites stories they may still be reviewing.
+- **Never** write to another change's set, and do not use the name `default`. A
+  `.stories/stories.json` directly in `.stories/` is the old single-file layout: treat it as the
+  set called `default`, and refresh it only if the user asks for that.
+
+Refreshing a set means rewriting its `stories.json` for the change as it is now, keeping story
+and step `id`s where the story is still the same one, and leaving its `comments.json` alone.
 
 ## Write stories
 
@@ -25,6 +52,8 @@ The scripts are in this skill's `scripts/` directory; run them with `node` from 
    (`gh pr view --json baseRefName`), otherwise `main` or `master`. Compare from the merge base:
    `git merge-base <base> HEAD`, then `git diff <merge-base>` (this includes uncommitted work).
    Record `base`, `head`, `baseSha` (the merge base) and `headSha` (`git rev-parse HEAD`).
+   `head` must be the current branch name exactly (`git branch --show-current`): the extension
+   uses it to show this set when that branch is checked out.
 
 2. **Read the changed code, and its callers.** For each changed function, find what calls it and
    keep going up until you reach an entry point: an HTTP route, a message or event handler, a CLI
@@ -72,12 +101,13 @@ The scripts are in this skill's `scripts/` directory; run them with `node` from 
      new story for it.
    - `unstoried.summary` is one sentence describing these files as a whole.
 
-7. **Validate, then fix.** Run `node <skill>/scripts/validate.mjs`. It checks the structure, that
+7. **Validate, then fix.** Run `node <skill>/scripts/validate.mjs` (add `--set <name>` when the
+   set is not named after the branch). It prints which set it checked. It checks the structure, that
    every line's text matches the file at that line number, and that every changed file is
    accounted for. Fix every error and re-run until it passes. Treat warnings as things to look at.
 
-8. **Tell the user** how many stories you wrote and to run "Code Stories: Open Story Panel" in
-   VS Code. If `.stories/` is not ignored by git, mention that they may want to add it to
+8. **Tell the user** how many stories you wrote, which set they are in and whether you created
+   or refreshed it, and to run "Code Stories: Open Story Panel" in VS Code. If `.stories/` is not ignored by git, mention that they may want to add it to
    `.gitignore`.
 
 When refreshing existing stories after the code changed, keep story and step `id`s stable where
@@ -86,10 +116,13 @@ story's content changes.
 
 ## Address comments
 
-The reviewer leaves comments in the editor. Local comments are saved to `.stories/comments.json`
-for you. Your reply appears in the same thread in their editor as soon as you write it.
+The reviewer leaves comments in the editor. Local comments are saved to `comments.json` in the
+story set they were reading, for you. Your reply appears in the same thread in their editor as
+soon as you write it.
 
-1. **List what is waiting.** Run `node <skill>/scripts/comments.mjs list`. It prints each local,
+1. **List what is waiting.** Run `node <skill>/scripts/comments.mjs list`. It works on the set
+   that belongs to the current branch and says which one; add `--set <name>` (to `list` and to
+   `reply`) for another set. It prints each local,
    unresolved comment whose status is `waiting`, with the file, the lines, the code there now and
    the whole thread. Only these are yours. Leave comments with `"source": "pr"` alone: they belong
    to the pull request on GitHub.
@@ -113,7 +146,7 @@ for you. Your reply appears in the same thread in their editor as soon as you wr
    thread is the reviewer's call.
 
 4. **Keep the stories true.** If you changed code, line numbers and excerpts in
-   `.stories/stories.json` may now be wrong. Update the affected steps (and `headSha` if you
+   that set's `stories.json` may now be wrong. Update the affected steps (and `headSha` if you
    committed), then run `node <skill>/scripts/validate.mjs` until it passes.
 
 5. **Summarise for the user**: how many comments you changed, declined and answered, and

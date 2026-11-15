@@ -2,7 +2,7 @@
   "name": "code-story-walkthrough",
   "displayName": "Code Story Walkthrough",
   "description": "Review a change as stories: each one starts at an entry point and follows the calls down to the code that changed. Works with an AI agent skill that writes the stories and answers your review comments.",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "publisher": "code-story-walkthrough",
   "engines": {
     "vscode": "^1.85.0"
@@ -12,7 +12,8 @@
   ],
   "main": "./out/extension.js",
   "activationEvents": [
-    "workspaceContains:.stories/stories.json"
+    "workspaceContains:.stories/stories.json",
+    "workspaceContains:.stories/*/stories.json"
   ],
   "contributes": {
     "commands": [
@@ -40,6 +41,17 @@
       {
         "command": "codeStories.showUnstoried",
         "title": "View Changes Not in a Story",
+        "category": "Code Stories"
+      },
+      {
+        "command": "codeStories.switchSet",
+        "title": "Switch Story Set",
+        "category": "Code Stories",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "codeStories.deleteSet",
+        "title": "Delete the Story Set on Screen",
         "category": "Code Stories"
       },
       {
@@ -109,13 +121,18 @@
     "viewsWelcome": [
       {
         "view": "codeStories.stories",
-        "contents": "No stories in this workspace yet.\n\nStories are written by your AI agent into .stories/stories.json. Install the skill, then ask the agent: \"Create code stories for this branch\".\n\n[Install Agent Skill](command:codeStories.installSkill)\n\n[Open Story Panel](command:codeStories.open)"
+        "contents": "No stories in this workspace yet.\n\nStories are written by your AI agent into .stories/, one folder per change. Install the skill, then ask the agent: \"Create code stories for this branch\".\n\n[Install Agent Skill](command:codeStories.installSkill)\n\n[Open Story Panel](command:codeStories.open)"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "codeStories.open",
+          "when": "view == codeStories.stories",
+          "group": "navigation"
+        },
+        {
+          "command": "codeStories.switchSet",
           "when": "view == codeStories.stories",
           "group": "navigation"
         }

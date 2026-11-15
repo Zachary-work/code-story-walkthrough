@@ -30,6 +30,15 @@ export async function gitHead(root: string): Promise<string | undefined> {
   }
 }
 
+/** The checked-out branch, or undefined on a detached HEAD or outside a repository. */
+export async function gitBranch(root: string): Promise<string | undefined> {
+  try {
+    return (await run('git', ['branch', '--show-current'], root)).trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Workspace files that differ from base, untracked ones included, or undefined when git cannot say. */
 export async function changedFiles(root: string, base: string): Promise<string[] | undefined> {
   try {

@@ -71,6 +71,10 @@ export class StoryPanel implements vscode.Disposable {
     return {
       error: store.error,
       doc: store.doc,
+      sets: store.sets.map(s => ({ id: s.id, title: s.title, stories: s.stories })),
+      setId: store.setId,
+      foreign: session.foreign ?? null,
+      branch: session.branch ?? null,
       view: session.view,
       storyIndex: session.storyIndex,
       stepIndex: session.stepIndex,
@@ -99,6 +103,10 @@ export class StoryPanel implements vscode.Disposable {
     switch (m.type) {
       case 'ready':
         return this.post();
+      case 'selectSet':
+        return session.store.sets.some(s => s.id === m.id) ? session.selectSet(m.id) : undefined;
+      case 'deleteSet':
+        return vscode.commands.executeCommand('codeStories.deleteSet');
       case 'openStory':
         return session.openStory(m.index);
       case 'overview':

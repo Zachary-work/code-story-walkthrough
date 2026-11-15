@@ -1,20 +1,20 @@
 #!/usr/bin/env node
-// Checks .stories/stories.json against the working tree.
-// Usage: node validate.mjs [workspace-root]
+// Checks one story set's stories.json against the working tree.
+// Usage: node validate.mjs [workspace-root] [--set <name>]
+// Without --set it checks the set that belongs to the current branch.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { DEFAULT_SET, currentBranch, resolveSet, takeSetOption } from './sets.mjs';
 
-const root = path.resolve(process.argv[2] ?? '.');
-const storiesPath = path.join(root, '.stories', 'stories.json');
+const options = takeSetOption(process.argv.slice(2));
+const root = path.resolve(options.rest[0] ?? '.');
+const set = resolveSet(root, options.set);
+const storiesPath = path.join(set.dir, 'stories.json');
 const errors = [];
 const warnings = [];
 const KINDS = ['context', 'add', 'del', 'call'];
-
-if (!fs.existsSync(storiesPath)) {
-  console.error(`Not found: ${storiesPath}`);
-  process.exit(1);
-}
+console.log(`Story set: ${set.id} (${path.relative(root, storiesPath).replace(/\\/g, '/')})`);
 
 let doc;
 try {
@@ -34,6 +34,11 @@ function linesOf(file) {
 }
 
 if (doc.version !== 1) errors.push('version: must be 1');
+// The extension finds a branch's set by folder name or by head, so head must be the branch name.
+const branch = currentBranch(root);
+if (set.id !== DEFAULT_SET && branch && doc.head !== branch) {
+  warnings.push(`head is "${doc.head ?? ''}" but the branch is "${branch}"; head must be the branch name`);
+}
 if (typeof doc.title !== 'string' || !doc.title) errors.push('title: required');
 if (!Array.isArray(doc.stories) || doc.stories.length === 0) errors.push('stories: must be a non-empty array');
 
