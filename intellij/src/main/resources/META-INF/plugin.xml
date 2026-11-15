@@ -1,0 +1,35 @@
+<idea-plugin>
+    <id>dev.codestories.walkthrough</id>
+    <name>Code Story Walkthrough</name>
+    <vendor>code-story-walkthrough</vendor>
+    <description><![CDATA[
+        Review a change as stories: each one starts at an entry point and follows the calls down to
+        the code that changed. Works with an AI agent skill that writes the stories into
+        <code>.stories/</code> and answers your review comments. Needs Node.js on your PATH.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.jcef</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Code Stories" anchor="right" icon="/icons/stories.svg"
+                    factoryClass="dev.codestories.StoriesToolWindowFactory"/>
+        <postStartupActivity implementation="dev.codestories.StartCore"/>
+        <notificationGroup id="Code Stories" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <group id="CodeStories.Group" text="Code Stories" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="CodeStories.Open" class="dev.codestories.OpenPanelAction" text="Open Story Panel"
+                    description="Show the stories for the change you are reviewing"/>
+            <action id="CodeStories.NextStep" class="dev.codestories.NextStepAction" text="Next Step"/>
+            <action id="CodeStories.PrevStep" class="dev.codestories.PrevStepAction" text="Previous Step"/>
+            <action id="CodeStories.Comment" class="dev.codestories.AddCommentAction" text="Add Review Comment"
+                    description="Comment on the selected lines, for your agent or on the pull request"/>
+        </group>
+        <action id="CodeStories.CommentInEditor" class="dev.codestories.AddCommentAction" text="Add Review Comment (Code Stories)">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { Step, Story, resolveLine } from './model';
-import { Session } from './session';
+import { Step, Story, resolveLine } from './core/model';
+import { Session } from './core/session';
 
 /** Keeps the real editor in step with the story: opens files, reveals lines, marks changed and calling lines. */
 export class EditorFollower implements vscode.Disposable {

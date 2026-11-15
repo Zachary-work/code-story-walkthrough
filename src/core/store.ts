@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as vscode from 'vscode';
+import { Disposable, Emitter } from './events';
 import { CommentsFile, StoriesDoc, parseComments, parseStories } from './model';
 
 /** The set made of .stories/stories.json itself, from before each change had its own folder. */
@@ -21,31 +21,29 @@ export function setIdFor(branch: string): string {
   return branch.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^[-.]+|[-.]+$/g, '') || DEFAULT_SET;
 }
 
-/** Reads and watches the story sets of one workspace folder, and holds the one being shown. */
-export class Store implements vscode.Disposable {
+/**
+ * Reads the story sets of one workspace folder, and holds the one being shown.
+ * It does not watch the files: the editor it runs in calls reload() when .stories/ changes.
+ */
+export class Store implements Disposable {
   doc?: StoriesDoc;
   error?: string;
   comments: CommentsFile = { version: 1, comments: [] };
   sets: StorySet[] = [];
   setId = DEFAULT_SET;
 
-  private readonly emitter = new vscode.EventEmitter<void>();
+  private readonly emitter = new Emitter();
   readonly onDidChange = this.emitter.event;
-  private readonly watcher: vscode.FileSystemWatcher;
   private timer?: NodeJS.Timeout;
 
   constructor(readonly root: string) {
-    this.watcher = vscode.workspace.createFileSystemWatcher(
-      new vscode.RelativePattern(vscode.Uri.file(root), '.stories/**/*.json')
-    );
-    const changed = () => {
-      clearTimeout(this.timer);
-      this.timer = setTimeout(() => this.reload(), 100);
-    };
-    this.watcher.onDidChange(changed);
-    this.watcher.onDidCreate(changed);
-    this.watcher.onDidDelete(changed);
     this.read();
+  }
+
+  /** Reloads shortly, folding a burst of file events into one read. */
+  reloadSoon(): void {
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.reload(), 100);
   }
 
   /** Folder of the set being shown. */
@@ -92,14 +90,11 @@ export class Store implements vscode.Disposable {
     this.reload();
   }
 
-  /** Moves a set's stories and comments to the trash. */
-  async deleteSet(setId: string): Promise<void> {
+  /** The files or folder that make up a set. The editor deletes them, so it can use its own trash. */
+  deleteTargets(setId: string): string[] {
     const dir = this.dirOf(setId);
     const targets = setId === DEFAULT_SET ? ['stories.json', 'comments.json'].map(f => path.join(dir, f)) : [dir];
-    for (const target of targets.filter(t => fs.existsSync(t))) {
-      await vscode.workspace.fs.delete(vscode.Uri.file(target), { recursive: true, useTrash: true });
-    }
-    this.reload();
+    return targets.filter(t => fs.existsSync(t));
   }
 
   /** Re-reads comments.json, applies the change and writes it back, so agent edits are not overwritten. */
@@ -170,7 +165,6 @@ export class Store implements vscode.Disposable {
 
   dispose(): void {
     clearTimeout(this.timer);
-    this.watcher.dispose();
     this.emitter.dispose();
   }
 }

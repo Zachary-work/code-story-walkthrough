@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import * as vscode from 'vscode';
+import { Disposable, Emitter, Host } from './events';
 import { addedLines, changedFiles, gitBranch, gitHead, readTextLines } from './github';
 import { Step, Story, UnstoriedFile } from './model';
 import { DEFAULT_SET, Store, StorySet, setIdFor } from './store';
@@ -47,7 +47,7 @@ export interface LineCoverage {
 }
 
 /** Where the reviewer is: which story, step and line, and which stories are reviewed. */
-export class Session implements vscode.Disposable {
+export class Session implements Disposable {
   view: 'overview' | 'story' = 'overview';
   storyIndex = 0;
   stepIndex = 0;
@@ -66,19 +66,22 @@ export class Session implements vscode.Disposable {
   /** Excerpt lines that no longer match the file, keyed by story and step index. */
   private staleLines = new Map<string, number[]>();
 
-  private readonly changeEmitter = new vscode.EventEmitter<void>();
-  private readonly navigateEmitter = new vscode.EventEmitter<void>();
+  private readonly changeEmitter = new Emitter();
+  private readonly navigateEmitter = new Emitter();
   /** Fires when anything shown in the panel or tree may have changed. */
   readonly onDidChange = this.changeEmitter.event;
   /** Fires when the editor should follow to the current step and line. */
   readonly onDidNavigate = this.navigateEmitter.event;
 
-  private readonly subscriptions: vscode.Disposable[];
+  private readonly subscriptions: Disposable[];
+  private readonly memento: Host['memento'];
 
-  constructor(readonly store: Store, private readonly memento: vscode.Memento) {
-    // .git/HEAD changes on a branch switch. Window focus covers worktrees, where .git is a file.
-    const head = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.file(store.root), '.git/HEAD'));
-    head.onDidChange(() => void this.checkGit());
+  /**
+   * The editor calls checkGit() when a file is saved, the window gains focus or the branch
+   * changes, and store.reload() when .stories/ changes. The session watches nothing itself.
+   */
+  constructor(readonly store: Store, private readonly host: Host) {
+    this.memento = host.memento;
     this.subscriptions = [
       store.onDidChange(() => {
         if (this.pickSet()) {
@@ -88,10 +91,7 @@ export class Session implements vscode.Disposable {
         this.checkFiles();
         this.changeEmitter.fire();
         void this.checkGit();
-      }),
-      vscode.workspace.onDidSaveTextDocument(() => void this.checkGit()),
-      vscode.window.onDidChangeWindowState(state => state.focused && void this.checkGit()),
-      head
+      })
     ];
     this.pickSet();
     this.checkFiles();
@@ -375,9 +375,8 @@ export class Session implements vscode.Disposable {
     const files = new Map<string, string[] | undefined>();
     const read = (file: string) => {
       if (!files.has(file)) {
-        const uri = vscode.Uri.file(this.store.abs(file)).toString();
-        const open = vscode.workspace.textDocuments.find(d => d.uri.toString() === uri);
-        files.set(file, open ? open.getText().split(/\r?\n/) : readTextLines(this.store.abs(file)));
+        const open = this.host.openText?.(this.store.abs(file));
+        files.set(file, open !== undefined ? open.split(/\r?\n/) : readTextLines(this.store.abs(file)));
       }
       return files.get(file);
     };
@@ -402,7 +401,7 @@ export class Session implements vscode.Disposable {
   }
 
   /** Asks git whether HEAD has moved on from the stories, and which files and lines the change touches. */
-  private async checkGit(): Promise<void> {
+  async checkGit(): Promise<void> {
     const branch = await gitBranch(this.store.root);
     if (branch !== this.branch) {
       this.branch = branch;

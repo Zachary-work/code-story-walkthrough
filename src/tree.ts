@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { Story } from './model';
-import { Session } from './session';
+import { Story } from './core/model';
+import { Session } from './core/session';
 
 type Node = { story: Story; index: number } | 'unstoried';
 

@@ -5,8 +5,9 @@ an event handler, a command) and follows the calls down to the code that changed
 
 Two parts work together through files in `.stories/`:
 
-- **The VS Code extension** shows the stories in a panel beside the editor, keeps the editor on the
-  step you are reading, and lets you leave review comments in the gutter.
+- **The editor plugin**, for VS Code or IntelliJ, shows the stories in a panel beside the editor,
+  keeps the editor on the step you are reading, and lets you leave review comments in the gutter.
+  Both editors read the same files, so a team can mix them on one review.
 - **The `code-stories` agent skill** (in `skill/code-stories/`) teaches an AI agent such as Claude
   Code to write the stories from a diff and to answer your comments.
 
@@ -50,6 +51,41 @@ Press F5 in VS Code ("Run Extension (example workspace)"). It opens `example/`, 
 stories and two comments. Run **Code Stories: Open Story Panel**.
 
 To build an installable `.vsix`: `npm run package`.
+
+## IntelliJ
+
+The plugin in `intellij/` works in IntelliJ-based IDEs, 2026.3 or later. It needs Node.js on your
+PATH, because it runs the same review logic as the VS Code extension.
+
+```
+npm install
+npm run compile
+cd intellij
+gradlew buildPlugin
+```
+
+Gradle needs Java 25. To build against an IDE you already have instead of downloading one, add
+`-PlocalIde="<path to the IDE>"`. Install `intellij/build/distributions/code-story-walkthrough-<version>.zip`
+with **Settings > Plugins > gear icon > Install Plugin from Disk**.
+
+- The **Code Stories** tool window, on the right, is the story panel.
+- **Tools > Code Stories** has Open Story Panel, Next Step, Previous Step and Add Review Comment.
+- To comment, select lines, right-click and choose **Add Review Comment (Code Stories)**. A
+  thread shows as a speech-bubble icon in the gutter; click it to read, reply or resolve.
+
+## How the code is shared
+
+| Part | Where | Used by |
+| --- | --- | --- |
+| Review logic: story sets, reviewed marks, line coverage, comments, git | `src/core/` (no editor imports) | both |
+| Panel UI | `media/panel.js`, `media/panel.css` | both |
+| Agent skill and its scripts | `skill/code-stories/` | both |
+| VS Code layer: webview host, editor, comment threads, commands | `src/*.ts` | VS Code |
+| IntelliJ layer: tool window, editor, gutter comments, actions | `intellij/src/` | IntelliJ |
+
+VS Code loads the core directly. IntelliJ runs it as a background Node process
+(`src/core/server.ts`) and exchanges one JSON message per line with it; the header of that file
+lists the messages.
 
 ## Install the skill
 
