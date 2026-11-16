@@ -15,6 +15,8 @@ const errors = [];
 const warnings = [];
 const KINDS = ['context', 'add', 'del', 'call'];
 const MAX_GAP = 40;
+/** Words that describe a value instead of giving it. */
+const VAGUE = /^<.*>$|\.\.\.|…|\b(mock(ed)?|stub(bed)?|non-empty|placeholder|some (value|object|string|id|data)|any (value|object|string)|etc)\b/i;
 console.log(`Story set: ${set.id} (${path.relative(root, storiesPath).replace(/\\/g, '/')})`);
 
 let doc;
@@ -177,6 +179,19 @@ for (const [si, story] of (Array.isArray(doc.stories) ? doc.stories : []).entrie
     if (!step.sample) warnings.push(`${w}: no sample`);
     else if (!['test', 'generated'].includes(step.sample.source)) errors.push(`${w}: sample.source must be "test" or "generated"`);
     else if (step.sample.source === 'test' && !step.sample.test) warnings.push(`${w}: sample is from a test but does not name it`);
+    if (step.sample) checkSample(step.sample, w);
+    let indent;
+    let indentReported = false;
+    /** The lines of a step must keep their indentation: each may lose the same amount, no more. */
+    const checkIndent = (lw, where, actual, text) => {
+      if (!text.trim() || indentReported) return;
+      const lost = actual.trimEnd().length - text.trimEnd().length;
+      if (indent === undefined) indent = lost;
+      else if (lost !== indent) {
+        indentReported = true;
+        errors.push(`${lw}: the indentation of this step's lines is not kept (${where}). Copy every line with its leading whitespace, exactly as it is in the file`);
+      }
+    };
 
     // A removed function: every line is a del, read from the base version of the file.
     if (step.removed) {
@@ -195,6 +210,8 @@ for (const [si, story] of (Array.isArray(doc.stories) ? doc.stories : []).entrie
           const actual = before?.[l.was - 1];
           if (before && (actual === undefined || actual.trim() !== l.text.trim())) {
             errors.push(`${lw}: ${file}:${l.was} at ${doc.base ?? base} is "${(actual ?? '').trim()}", not "${l.text.trim()}"`);
+          } else if (before) {
+            checkIndent(lw, `${file}:${l.was} at ${doc.base ?? base}`, actual, l.text);
           }
         }
       }
@@ -251,6 +268,7 @@ for (const [si, story] of (Array.isArray(doc.stories) ? doc.stories : []).entrie
         errors.push(`${lw}: ${step.file}:${l.line} is "${actual}", not "${l.text.trim()}".${hint}`);
         continue;
       }
+      checkIndent(lw, `${step.file}:${l.line}`, lines[l.line - 1], l.text);
       // The kind must agree with the diff, so a changed line is never passed off as unchanged.
       if (changes) {
         const isNew = !!addedHere?.has(l.line);
@@ -296,6 +314,46 @@ for (const [i, f] of (doc.unstoried?.files ?? []).entries()) {
 }
 
 /** Line numbers as short text: 64-74, 80. */
+/** Every string in a JSON value, keys included. */
+function stringsIn(value) {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.flatMap(stringsIn);
+  if (value && typeof value === 'object') return Object.entries(value).flatMap(([k, v]) => [k, ...stringsIn(v)]);
+  return [];
+}
+
+/** A sample is JSON with actual values, so the reviewer sees real data, not a description of it. */
+function checkSample(sample, w) {
+  for (const key of ['input', 'output']) {
+    const text = sample[key];
+    if (text === undefined || text === '') {
+      warnings.push(`${w}: sample has no ${key}`);
+      continue;
+    }
+    if (typeof text !== 'string') {
+      errors.push(`${w}: sample.${key} must be a string that holds JSON`);
+      continue;
+    }
+    let value;
+    try {
+      value = JSON.parse(text);
+    } catch {
+      errors.push(`${w}: sample.${key} is not JSON. Write the actual values as JSON, for example ${key === 'input' ? '{"code": "SPRING15", "subtotal": 120}' : '{"discount": 18}'}`);
+      continue;
+    }
+    if (key === 'input' && (value === null || typeof value !== 'object')) {
+      errors.push(`${w}: sample.input must be a JSON object: the arguments by parameter name, or the request`);
+    }
+    const vague = stringsIn(value).find(s => VAGUE.test(s));
+    if (vague !== undefined) {
+      warnings.push(`${w}: sample.${key} has "${vague}", which reads as a description. Write the actual value`);
+    }
+    if (text.length > 60 && !text.includes('\n')) {
+      warnings.push(`${w}: sample.${key} is one long line. Format it with two-space indentation (JSON.stringify(value, null, 2))`);
+    }
+  }
+}
+
 function ranges(numbers) {
   const parts = [];
   let start = numbers[0];

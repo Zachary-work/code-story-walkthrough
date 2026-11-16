@@ -113,8 +113,11 @@ and step `id`s where the story is still the same one, and leaving its `comments.
    - The panel marks every place where the excerpt leaves lines out ("12 lines not shown"), so
      the reader does not take two separate blocks for one. Keep each block readable on its own,
      and do not skip just one or two lines: include them as `context` instead.
-   - `text` must be copied from the file as it is now, for every line except `del` lines. Leading
-     indentation may be trimmed. Line numbers are 1-based and refer to the current file.
+   - `text` must be copied from the file as it is now, for every line except `del` lines. Copy
+     the whole line, with its leading whitespace. Never trim the indentation: without it the
+     panel shows the body of an `if` or a loop flush with the line above, and the code is hard
+     to read. `del` lines keep the indentation they had too. The validator rejects a step whose
+     lines lost their indentation. Line numbers are 1-based and refer to the current file.
    - Set `focusLine` to the line the editor should land on: the first changed line, or the
      `call` line in an unchanged step.
    - Give changed steps a one-sentence `summary` of what the change does there.
@@ -122,9 +125,26 @@ and step `id`s where the story is still the same one, and leaving its `comments.
 5. **Add a sample to each step.** A sample is a concrete input and output for that method, so
    the reviewer can see real values move through the path. Use the same scenario in every step
    of a story so the values line up.
+   - `input` and `output` are JSON with actual values. Each is a string that holds JSON,
+     formatted with two-space indentation (`JSON.stringify(value, null, 2)`).
+     - `input` is a JSON object. For a function, it has one key per parameter, by name:
+       `{ "code": "SPRING15", "subtotal": 120 }`. For an HTTP entry point, it is the request:
+       `{ "method": "POST", "path": "/api/checkout/quote", "body": { "cartId": "c_8841" } }`.
+       For an event or a command, it is the payload or the arguments.
+     - `output` is what the function returns, as JSON. For an HTTP entry point:
+       `{ "status": 200, "body": { ... } }` with the real body. When the function returns
+       nothing, give what it changed: `{ "saved": { "code": "SPRING15", "uses": 1 } }`. When it
+       throws in this scenario: `{ "throws": { "type": "PromoExpiredError", "message": "SPRING15 ended on 2025-06-30" } }`.
+     - Write every value out. Do not describe a value: not "non-empty summary", "mocked
+       object", "a valid cart", "..." or `<Cart>`. Give the summary text, the fields of the
+       object, the cart with its items. For a mock, give the data it returns in this scenario.
+     - Give an object by its data fields. Leave out fields that do not matter to this step
+       instead of abbreviating them; a field you show has its real value.
    - Prefer values from an existing test. Set `source` to `"test"` and name the test in `test`.
    - If no test covers it, derive values from the types and the upstream samples, set `source`
-     to `"generated"`, and say so in `note`. Never name a test that does not exist.
+     to `"generated"`, and say so in `note`. Never name a test that does not exist. Generated
+     values are still concrete: pick realistic ones and keep them the same down the path.
+   - Explanations go in `note`, not in `input` or `output`.
 
 6. **Name the tests, and say where to look closely.** Both go on the story.
    - `tests`: the tests that exercise this story, each with `name`, `file`, `line` and `steps`

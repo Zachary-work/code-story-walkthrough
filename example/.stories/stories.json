@@ -64,8 +64,8 @@
           ],
           "sample": {
             "source": "generated",
-            "input": "POST /api/checkout/quote\n{\n  \"cartId\": \"c_8841\",\n  \"promoCode\": \"SPRING15\"\n}",
-            "output": "200 OK\n{\n  \"subtotal\": 120,\n  \"discount\": 18,\n  \"tax\": 8.16,\n  \"total\": 110.16\n}",
+            "input": "{\n  \"method\": \"POST\",\n  \"path\": \"/api/checkout/quote\",\n  \"body\": {\n    \"cartId\": \"c_8841\",\n    \"promoCode\": \"SPRING15\"\n  }\n}",
+            "output": "{\n  \"status\": 200,\n  \"body\": {\n    \"subtotal\": 120,\n    \"discount\": 18,\n    \"tax\": 8.16,\n    \"total\": 110.16\n  }\n}",
             "note": "No test calls the controller, so the request and response were inferred from the service test. The promoCode field is new in this change."
           }
         },
@@ -87,45 +87,45 @@
             {
               "line": 6,
               "kind": "context",
-              "text": "const cart = carts.getById(request.cartId);"
+              "text": "  const cart = carts.getById(request.cartId);"
             },
             {
               "line": null,
               "at": 7,
               "kind": "del",
-              "text": "const ctx = { cart, customer: cart.customer };"
+              "text": "  const ctx = { cart, customer: cart.customer };"
             },
             {
               "line": 7,
               "kind": "add",
-              "text": "let ctx = { cart, customer: cart.customer };"
+              "text": "  let ctx = { cart, customer: cart.customer };"
             },
             {
               "line": 8,
               "kind": "add",
-              "text": "if (request.promoCode) {"
+              "text": "  if (request.promoCode) {"
             },
             {
               "line": 9,
               "kind": "add",
-              "text": "  ctx = { ...ctx, promo: promos.findActive(request.promoCode) };"
+              "text": "    ctx = { ...ctx, promo: promos.findActive(request.promoCode) };"
             },
             {
               "line": 10,
               "kind": "add",
-              "text": "}"
+              "text": "  }"
             },
             {
               "line": 11,
               "kind": "call",
-              "text": "return price(ctx);"
+              "text": "  return price(ctx);"
             }
           ],
           "sample": {
             "source": "test",
             "test": "checkout.test.js: applies promo code",
-            "input": "request = {\n  cartId: 'c_8841',\n  promoCode: 'SPRING15'\n}",
-            "output": "{ subtotal: 120, discount: 18, tax: 8.16, total: 110.16 }"
+            "input": "{\n  \"request\": {\n    \"cartId\": \"c_8841\",\n    \"promoCode\": \"SPRING15\"\n  }\n}",
+            "output": "{\n  \"subtotal\": 120,\n  \"discount\": 18,\n  \"tax\": 8.16,\n  \"total\": 110.16\n}"
           }
         },
         {
@@ -143,28 +143,28 @@
             {
               "line": 6,
               "kind": "context",
-              "text": "const subtotal = ctx.cart.items.reduce((sum, item) => sum + item.price * item.qty, 0);"
+              "text": "  const subtotal = ctx.cart.items.reduce((sum, item) => sum + item.price * item.qty, 0);"
             },
             {
               "line": 7,
               "kind": "context",
-              "text": "// Order matters: discounts first, then tax on what is left."
+              "text": "  // Order matters: discounts first, then tax on what is left."
             },
             {
               "line": 8,
               "kind": "call",
-              "text": "const discount = applyDiscount(ctx, subtotal);"
+              "text": "  const discount = applyDiscount(ctx, subtotal);"
             },
             {
               "line": 9,
               "kind": "context",
-              "text": "const taxable = subtotal - discount;"
+              "text": "  const taxable = subtotal - discount;"
             }
           ],
           "sample": {
             "source": "generated",
-            "input": "ctx = {\n  cart: { id: 'c_8841', items: 2 },\n  customer: { tier: 'STANDARD' },\n  promo: { code: 'SPRING15', percentOff: 15 }\n}",
-            "output": "{ subtotal: 120, discount: 18, tax: 8.16, total: 110.16 }",
+            "input": "{\n  \"ctx\": {\n    \"cart\": {\n      \"id\": \"c_8841\",\n      \"items\": 2\n    },\n    \"customer\": {\n      \"tier\": \"STANDARD\"\n    },\n    \"promo\": {\n      \"code\": \"SPRING15\",\n      \"percentOff\": 15\n    }\n  }\n}",
+            "output": "{\n  \"subtotal\": 120,\n  \"discount\": 18,\n  \"tax\": 8.16,\n  \"total\": 110.16\n}",
             "note": "No test calls this function directly, so these values were inferred from the samples upstream."
           }
         },
@@ -186,44 +186,44 @@
             {
               "line": 4,
               "kind": "context",
-              "text": "let discount = subtotal * LOYALTY_RATES[ctx.customer.tier];"
+              "text": "  let discount = subtotal * LOYALTY_RATES[ctx.customer.tier];"
             },
             {
               "line": 5,
               "kind": "add",
-              "text": "const promo = ctx.promo;"
+              "text": "  const promo = ctx.promo;"
             },
             {
               "line": 6,
               "kind": "add",
-              "text": "if (promo) {"
+              "text": "  if (promo) {"
             },
             {
               "line": 7,
               "kind": "add",
-              "text": "  discount += subtotal * (promo.percentOff / 100);"
+              "text": "    discount += subtotal * (promo.percentOff / 100);"
             },
             {
               "line": 8,
               "kind": "add",
-              "text": "}"
+              "text": "  }"
             },
             {
               "line": null,
               "at": 9,
               "kind": "del",
-              "text": "return discount;"
+              "text": "  return discount;"
             },
             {
               "line": 9,
               "kind": "add",
-              "text": "return Math.min(discount, subtotal);"
+              "text": "  return Math.min(discount, subtotal);"
             }
           ],
           "sample": {
             "source": "test",
             "test": "checkout.test.js: promo percent off",
-            "input": "ctx.customer = { tier: 'STANDARD' }\nctx.promo    = { code: 'SPRING15', percentOff: 15 }\nsubtotal     = 120",
+            "input": "{\n  \"ctx\": {\n    \"customer\": {\n      \"tier\": \"STANDARD\"\n    },\n    \"promo\": {\n      \"code\": \"SPRING15\",\n      \"percentOff\": 15\n    }\n  },\n  \"subtotal\": 120\n}",
             "output": "18",
             "note": "Loyalty 0 plus promo 18 (15% of 120), under the 120 cap."
           }
@@ -270,33 +270,33 @@
             {
               "line": 6,
               "kind": "context",
-              "text": "const cart = carts.getById(request.cartId);"
+              "text": "  const cart = carts.getById(request.cartId);"
             },
             {
               "line": 7,
               "kind": "add",
-              "text": "let ctx = { cart, customer: cart.customer };"
+              "text": "  let ctx = { cart, customer: cart.customer };"
             },
             {
               "line": 8,
               "kind": "add",
-              "text": "if (request.promoCode) {"
+              "text": "  if (request.promoCode) {"
             },
             {
               "line": 9,
               "kind": "call",
-              "text": "  ctx = { ...ctx, promo: promos.findActive(request.promoCode) };"
+              "text": "    ctx = { ...ctx, promo: promos.findActive(request.promoCode) };"
             },
             {
               "line": 10,
               "kind": "add",
-              "text": "}"
+              "text": "  }"
             }
           ],
           "sample": {
             "source": "generated",
-            "input": "request = {\n  cartId: 'c_8841',\n  promoCode: 'NOPE'\n}",
-            "output": "throws Error: Promo code NOPE is not valid",
+            "input": "{\n  \"request\": {\n    \"cartId\": \"c_8841\",\n    \"promoCode\": \"NOPE\"\n  }\n}",
+            "output": "{\n  \"throws\": {\n    \"type\": \"Error\",\n    \"message\": \"Promo code NOPE is not valid\"\n  }\n}",
             "note": "Inferred from the promos test: the error from findActive is not caught here."
           }
         },
@@ -349,8 +349,8 @@
           "sample": {
             "source": "test",
             "test": "checkout.test.js: rejects unknown code",
-            "input": "code = 'NOPE'",
-            "output": "throws Error: Promo code NOPE is not valid"
+            "input": "{\n  \"code\": \"NOPE\"\n}",
+            "output": "{\n  \"throws\": {\n    \"type\": \"Error\",\n    \"message\": \"Promo code NOPE is not valid\"\n  }\n}"
           }
         }
       ]

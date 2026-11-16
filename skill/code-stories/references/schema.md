@@ -40,15 +40,15 @@ numbers are 1-based.
           "focusLine": 29,
           "changed": false,
           "lines": [
-            { "line": 28, "kind": "context", "text": "public QuoteResponse quote(@RequestBody QuoteRequest request) {" },
-            { "line": 29, "kind": "call", "text": "Quote quote = checkoutService.buildQuote(request);" },
-            { "line": 30, "kind": "context", "text": "return QuoteResponse.from(quote);" }
+            { "line": 28, "kind": "context", "text": "    public QuoteResponse quote(@RequestBody QuoteRequest request) {" },
+            { "line": 29, "kind": "call", "text": "        Quote quote = checkoutService.buildQuote(request);" },
+            { "line": 30, "kind": "context", "text": "        return QuoteResponse.from(quote);" }
           ],
           "sample": {
             "source": "test",
             "test": "CheckoutControllerIT.quoteWithPromo",
-            "input": "POST /api/checkout/quote\n{ \"cartId\": \"c_8841\", \"promoCode\": \"SPRING15\" }",
-            "output": "200 OK\n{ \"subtotal\": \"120.00\", \"discount\": \"18.00\", \"total\": \"110.16\" }",
+            "input": "{\n  \"method\": \"POST\",\n  \"path\": \"/api/checkout/quote\",\n  \"body\": {\n    \"cartId\": \"c_8841\",\n    \"promoCode\": \"SPRING15\"\n  }\n}",
+            "output": "{\n  \"status\": 200,\n  \"body\": {\n    \"subtotal\": \"120.00\",\n    \"discount\": \"18.00\",\n    \"total\": \"110.16\"\n  }\n}",
             "note": "The promoCode field is new in this change."
           }
         },
@@ -62,19 +62,19 @@ numbers are 1-based.
           "deletions": 1,
           "summary": "Adds the promo's percentage on top of any loyalty discount, and caps the total at the subtotal.",
           "lines": [
-            { "line": 52, "kind": "context", "text": "public Money apply(PricingContext ctx, Money subtotal) {" },
-            { "line": 53, "kind": "context", "text": "Money discount = loyaltyDiscount(ctx.customer(), subtotal);" },
-            { "line": 54, "kind": "add", "text": "Promo promo = ctx.promo();" },
-            { "line": 55, "kind": "add", "text": "if (promo != null) {" },
-            { "line": 56, "kind": "add", "text": "    discount = discount.plus(promo.percentOff().of(subtotal));" },
-            { "line": 57, "kind": "add", "text": "}" },
-            { "line": null, "at": 58, "kind": "del", "text": "return discount;" },
-            { "line": 58, "kind": "add", "text": "return discount.min(subtotal);" }
+            { "line": 52, "kind": "context", "text": "    public Money apply(PricingContext ctx, Money subtotal) {" },
+            { "line": 53, "kind": "context", "text": "        Money discount = loyaltyDiscount(ctx.customer(), subtotal);" },
+            { "line": 54, "kind": "add", "text": "        Promo promo = ctx.promo();" },
+            { "line": 55, "kind": "add", "text": "        if (promo != null) {" },
+            { "line": 56, "kind": "add", "text": "            discount = discount.plus(promo.percentOff().of(subtotal));" },
+            { "line": 57, "kind": "add", "text": "        }" },
+            { "line": null, "at": 58, "kind": "del", "text": "        return discount;" },
+            { "line": 58, "kind": "add", "text": "        return discount.min(subtotal);" }
           ],
           "sample": {
             "source": "generated",
-            "input": "subtotal = 120.00 CAD\nctx.promo = Promo { percentOff: 15 }",
-            "output": "Money 18.00 CAD",
+            "input": "{\n  \"ctx\": {\n    \"customer\": { \"tier\": \"STANDARD\" },\n    \"promo\": { \"code\": \"SPRING15\", \"percentOff\": 15 }\n  },\n  \"subtotal\": { \"amount\": \"120.00\", \"currency\": \"CAD\" }\n}",
+            "output": "{\n  \"amount\": \"18.00\",\n  \"currency\": \"CAD\"\n}",
             "note": "No test calls this with a promo, so these values were inferred from the types."
           }
         }
@@ -129,7 +129,7 @@ numbers are 1-based.
 | `additions`, `deletions` | if changed | Line counts for this method. Default to the number of `add` and `del` lines. |
 | `summary` | if changed | One sentence on what the change does here. |
 | `lines` | yes | The excerpt to show, all from inside that one function, opening with its signature line. See below. |
-| `sample` | recommended | `{ source, test?, input, output, note? }`. `source` is `"test"` or `"generated"`. `input` and `output` are plain text; use `\n` for line breaks. |
+| `sample` | recommended | `{ source, test?, input, output, note? }`. `source` is `"test"` or `"generated"`. `input` and `output` are strings that hold JSON with actual values. See [Sample](#sample). |
 | `participant` | optional | Box in the sequence diagram. Defaults to `name` up to the last dot. |
 | `call` | optional | Arrow label. Defaults to the method name plus `()`. |
 | `calledFrom` | optional | `id` of the calling step when it is not the previous one, for a path that branches. |
@@ -151,8 +151,33 @@ The kind must agree with the diff: a line that is new or modified is `add`, neve
 Every added or modified line of a function should appear in its step. The panel counts the
 changed lines that no step shows and lists them for the reviewer as "lines not seen".
 
-`text` is the line as it is in the file now (for `del`, as it was), with leading indentation
-optionally trimmed. Keep relative indentation inside a block so the excerpt reads as code.
+`text` is the whole line as it is in the file now (for `del`, as it was), with its leading
+whitespace. Do not trim the indentation: the panel shows `text` as it is, so trimmed lines read
+as flat text, not as code. The validator rejects a step whose lines do not keep the indentation
+they have in the file.
+
+### Sample
+
+`input` and `output` are each a string that holds JSON, formatted with two-space indentation.
+The panel shows the string as it is. The validator parses both and rejects text that is not
+JSON.
+
+| Field | Content |
+| --- | --- |
+| `input` | A JSON object. For a function: one key per parameter, by name. For an HTTP entry point: `{ "method", "path", "body" }`. For an event or a command: the payload or the arguments. |
+| `output` | What the function returns, as JSON. For an HTTP entry point: `{ "status", "body" }`. If it returns nothing: what it changed, such as `{ "saved": { ... } }`. If it throws in this scenario: `{ "throws": { "type", "message" } }`. |
+| `note` | Optional plain text. Explanations go here, not in `input` or `output`. |
+
+Every value is an actual value. Do not write a description in place of a value.
+
+| Wrong | Right |
+| --- | --- |
+| `"summary": "non-empty summary"` | `"summary": "Adds promo codes to the checkout quote"` |
+| `"repo": "mocked object"` | `"repo.findActive returns": { "code": "SPRING15", "percentOff": 15 }` |
+| `"cart": "<Cart>"` or `"cart": "..."` | `"cart": { "id": "c_8841", "items": [{ "sku": "A1", "qty": 2, "price": 60 }] }` |
+| `request = { cartId: 'c_8841' }` (not JSON) | `{ "request": { "cartId": "c_8841" } }` |
+
+Leave out a field that does not matter to the step. A field that you show has its real value.
 
 ## `.stories/<set>/comments.json`
 
