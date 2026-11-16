@@ -26,6 +26,12 @@ numbers are 1-based.
       "title": "Apply a promo code to a checkout quote",
       "goal": "A shopper can enter a promo code at checkout and see the discounted total before paying.",
       "entryPoint": "POST /api/checkout/quote",
+      "tests": [
+        { "name": "CheckoutControllerIT.quoteWithPromo", "file": "src/test/java/api/CheckoutControllerIT.java", "line": 61, "steps": ["controller", "calculator"] }
+      ],
+      "risks": [
+        { "text": "The promo is added on top of the loyalty discount. Nothing in the ticket says whether the two should stack.", "step": "calculator" }
+      ],
       "steps": [
         {
           "id": "controller",
@@ -108,6 +114,8 @@ numbers are 1-based.
 | `goal` | yes | One or two sentences on the outcome for the user or caller. |
 | `entryPoint` | recommended | How the path is triggered: `POST /api/checkout/quote`, `Event OrderPlaced`, `CLI sync --all`. |
 | `steps` | yes | One per function or method, in call order, entry point first. A call to another method of the same class is its own step. |
+| `tests` | recommended | The tests that exercise this story: `{ name, file, line?, steps? }`. `steps` lists the ids of the steps the test covers. Only tests that exist. Empty when the story has none; the panel then says it is untested. |
+| `risks` | optional | Up to three things the reviewer should look at closely: `{ text, step? }`. `step` is the id of the step it is about. |
 
 ### Step
 
@@ -125,6 +133,7 @@ numbers are 1-based.
 | `participant` | optional | Box in the sequence diagram. Defaults to `name` up to the last dot. |
 | `call` | optional | Arrow label. Defaults to the method name plus `()`. |
 | `calledFrom` | optional | `id` of the calling step when it is not the previous one, for a path that branches. |
+| `removed` | optional | `true` when the change deleted this function. `file` is the path it had, `changed` is `true`, and every line is a `del` with `was`. `focusLine` is not needed. |
 
 ### Line
 
@@ -133,7 +142,14 @@ numbers are 1-based.
 | `context` | number | Unchanged line shown for reading. |
 | `add` | number | Line added or modified by this change. |
 | `call` | number | Unchanged line that calls the next step. |
-| `del` | `null` | Line removed by this change. Set `at` to the current line it sat just before. |
+| `del` | `null` | Line removed by this change. Set `at` to the current line it sat just before. In a `removed` step, set `was` to its line number in the base version instead. |
+
+The kind must agree with the diff: a line that is new or modified is `add`, never `context` or
+`call`. When an added line is also the one that calls the next step, write
+`{ "line": 39, "kind": "add", "calls": true, "text": "return checkUsage(promo);" }`.
+
+Every added or modified line of a function should appear in its step. The panel counts the
+changed lines that no step shows and lists them for the reviewer as "lines not seen".
 
 `text` is the line as it is in the file now (for `del`, as it was), with leading indentation
 optionally trimmed. Keep relative indentation inside a block so the excerpt reads as code.

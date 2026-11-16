@@ -1,4 +1,6 @@
 import { execFile } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
 import { PrLink } from './model';
 
 export function parsePrUrl(url: string): PrLink | undefined {
@@ -45,6 +47,60 @@ export async function changedFiles(root: string, base: string): Promise<string[]
     const tracked = await run('git', ['diff', '--name-only', '--relative', base], root);
     const untracked = await run('git', ['ls-files', '--others', '--exclude-standard'], root);
     return [...new Set((tracked + untracked).split('\n').filter(Boolean))];
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The lines each file gained or changed since base, as 1-based numbers in the file as it is now.
+ * Blank lines are left out: nobody reviews them. Returns undefined when git cannot say.
+ */
+export async function addedLines(root: string, base: string): Promise<Map<string, number[]> | undefined> {
+  try {
+    const out = await run('git', ['diff', '-U0', '--relative', '--no-color', '--no-ext-diff', base], root);
+    const map = new Map<string, number[]>();
+    let file: string | undefined;
+    let inHunk = false;
+    let n = 0;
+    for (const line of out.split('\n')) {
+      if (line.startsWith('diff --git ')) {
+        inHunk = false;
+        file = undefined;
+      } else if (!inHunk && line.startsWith('+++ ')) {
+        file = line.startsWith('+++ b/') ? line.slice(6).replace(/\t$/, '') : undefined;
+      } else if (line.startsWith('@@')) {
+        const m = /^@@ -\d+(?:,\d+)? \+(\d+)/.exec(line);
+        inHunk = !!m;
+        n = m ? Number(m[1]) : 0;
+      } else if (inHunk && file && line.startsWith('+')) {
+        if (line.slice(1).trim()) {
+          map.set(file, [...(map.get(file) ?? []), n]);
+        }
+        n++;
+      }
+    }
+    // A file git does not track yet is new in its entirety.
+    for (const f of (await run('git', ['ls-files', '--others', '--exclude-standard'], root)).split('\n').filter(Boolean)) {
+      const lines = readTextLines(path.join(root, f));
+      if (lines) {
+        map.set(f, lines.flatMap((text, i) => (text.trim() ? [i + 1] : [])));
+      }
+    }
+    return map;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Lines of a text file, or undefined when it is missing, large or binary. */
+export function readTextLines(fsPath: string): string[] | undefined {
+  try {
+    if (fs.statSync(fsPath).size > 1024 * 1024) {
+      return undefined;
+    }
+    const text = fs.readFileSync(fsPath, 'utf8');
+    return text.includes('\0') ? undefined : text.split(/\r?\n/);
   } catch {
     return undefined;
   }

@@ -7,6 +7,10 @@ export interface StoryLine {
   line: number | null;
   /** For a deleted line: the current line it sat just before. */
   at?: number;
+  /** For a line of removed code: its line number in the base version of the file. */
+  was?: number;
+  /** An added line that also makes the call to the next step. */
+  calls?: boolean;
   kind: LineKind;
   text: string;
 }
@@ -29,11 +33,28 @@ export interface Step {
   file: string;
   focusLine: number;
   changed: boolean;
+  /** The whole function was deleted. Its lines are all `del` and are read from the base version. */
+  removed: boolean;
   additions: number;
   deletions: number;
   summary?: string;
   lines: StoryLine[];
   sample?: Sample;
+}
+
+/** A test that exercises a story. `steps` lists the ids of the steps it covers, when known. */
+export interface StoryTest {
+  name: string;
+  file: string;
+  line?: number;
+  steps?: string[];
+}
+
+/** Something the author of the change wants the reviewer to look at closely. */
+export interface Risk {
+  text: string;
+  /** Id of the step it is about. */
+  step?: string;
 }
 
 export interface Story {
@@ -42,6 +63,8 @@ export interface Story {
   goal: string;
   entryPoint?: string;
   steps: Step[];
+  tests: StoryTest[];
+  risks: Risk[];
 }
 
 export interface StoriesDoc {
@@ -129,6 +152,18 @@ export function parseStories(raw: string): StoriesDoc {
     if (!Array.isArray(story.steps) || story.steps.length === 0) {
       fail(sw, '"steps" must be a non-empty array');
     }
+    story.tests = (Array.isArray(story.tests) ? story.tests : [])
+      .filter((t: any) => t && typeof t.name === 'string' && typeof t.file === 'string')
+      .map((t: any) => ({
+        name: t.name,
+        file: t.file.replace(/\\/g, '/'),
+        line: Number.isInteger(t.line) ? t.line : undefined,
+        steps: Array.isArray(t.steps) ? t.steps.filter((s: unknown) => typeof s === 'string') : undefined
+      }));
+    story.risks = (Array.isArray(story.risks) ? story.risks : [])
+      .map((r: any) => (typeof r === 'string' ? { text: r } : r))
+      .filter((r: any) => r && typeof r.text === 'string' && r.text)
+      .map((r: any) => ({ text: r.text, step: typeof r.step === 'string' ? r.step : undefined }));
     story.steps.forEach((step: any, i: number) => {
       const w = `${sw}.steps[${i}]`;
       step.id = typeof step.id === 'string' ? step.id : `s${i + 1}`;
@@ -149,6 +184,7 @@ export function parseStories(raw: string): StoriesDoc {
         if (typeof l.text !== 'string') {
           fail(lw, '"text" must be a string');
         }
+        l.calls = l.kind === 'add' && l.calls === true;
         if (l.kind === 'del') {
           l.line = null;
         } else if (!Number.isInteger(l.line) || l.line < 1) {
@@ -157,11 +193,12 @@ export function parseStories(raw: string): StoriesDoc {
       });
       const adds = step.lines.filter((l: StoryLine) => l.kind === 'add').length;
       const dels = step.lines.filter((l: StoryLine) => l.kind === 'del').length;
+      step.removed = step.removed === true;
       step.changed = typeof step.changed === 'boolean' ? step.changed : adds + dels > 0;
       step.additions = Number.isInteger(step.additions) ? step.additions : adds;
       step.deletions = Number.isInteger(step.deletions) ? step.deletions : dels;
       const firstNumbered = step.lines.find((l: StoryLine) => l.line !== null);
-      step.focusLine = Number.isInteger(step.focusLine) ? step.focusLine : firstNumbered?.line ?? 1;
+      step.focusLine = Number.isInteger(step.focusLine) ? step.focusLine : firstNumbered?.line ?? step.lines[0]?.was ?? 1;
     });
     story.steps.forEach((step: any, i: number) => {
       const from = story.steps.findIndex((s: Step) => s.id === step.calledFrom);

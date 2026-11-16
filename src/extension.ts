@@ -4,9 +4,11 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { CommentUi } from './comments';
 import { EditorFollower } from './editor';
-import { AGENT_PROMPT, MISSING_REASON, StoryPanel } from './panel';
-import { Session } from './session';
-import { DEFAULT_SET, Store, setIdFor } from './store';
+import { CommentBook } from './core/comments';
+import { Session } from './core/session';
+import { DEFAULT_SET, Store, setIdFor } from './core/store';
+import { AGENT_PROMPT, MISSING_REASON } from './core/view';
+import { StoryPanel } from './panel';
 import { StoryTree } from './tree';
 
 const SKILL_NAME = 'code-stories';
@@ -24,11 +26,28 @@ export function activate(context: vscode.ExtensionContext): void {
     return;
   }
 
+  // The shared core watches nothing itself. These are the events it needs from VS Code.
+  const openText = (fsPath: string) => vscode.workspace.textDocuments.find(d => d.uri.scheme === 'file' && d.uri.fsPath === fsPath)?.getText();
   const store = new Store(folder.uri.fsPath);
-  const session = new Session(store, context.workspaceState);
+  const session = new Session(store, { memento: context.workspaceState, openText });
+  const stories = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(folder, '.stories/**/*.json'));
+  stories.onDidChange(() => store.reloadSoon());
+  stories.onDidCreate(() => store.reloadSoon());
+  stories.onDidDelete(() => store.reloadSoon());
+  // .git/HEAD changes on a branch switch. Window focus covers worktrees, where .git is a file.
+  const head = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(folder, '.git/HEAD'));
+  head.onDidChange(() => void session.checkGit());
+  context.subscriptions.push(
+    stories,
+    head,
+    vscode.workspace.onDidSaveTextDocument(() => void session.checkGit()),
+    vscode.window.onDidChangeWindowState(state => state.focused && void session.checkGit())
+  );
+
+  const deleteSet = () => vscode.commands.executeCommand('codeStories.deleteSet');
   const editor = new EditorFollower(session);
-  const comments = new CommentUi(store, editor);
-  const panel = new StoryPanel(context.extensionUri, session, comments, editor);
+  const comments = new CommentUi(store, new CommentBook(store, openText), editor);
+  const panel = new StoryPanel(context.extensionUri, session, comments, editor, deleteSet);
   const tree = new StoryTree(session);
   context.subscriptions.push(
     store,
@@ -88,7 +107,10 @@ export function activate(context: vscode.ExtensionContext): void {
       'Delete'
     );
     if (answer === 'Delete') {
-      await store.deleteSet(set.id);
+      for (const target of store.deleteTargets(set.id)) {
+        await vscode.workspace.fs.delete(vscode.Uri.file(target), { recursive: true, useTrash: true });
+      }
+      store.reload();
     }
   });
   register('codeStories.openStory', (index: number) => {

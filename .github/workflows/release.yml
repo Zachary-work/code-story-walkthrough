@@ -1,0 +1,64 @@
+# Publishes a GitHub release when a version tag is pushed (git tag v0.4.0 && git push origin v0.4.0).
+# The release has three downloads with fixed names, so "releases/latest/download/<name>" always works:
+#   code-story-walkthrough.vsix            the VS Code extension
+#   code-story-walkthrough-intellij.zip    the IntelliJ plugin
+#   code-stories-skill.tar.gz / .zip       the agent skill
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - name: Check that the tag matches the versions
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          extension="$(node -p "require('./package.json').version")"
+          plugin="$(sed -n 's/^version = "\(.*\)"/\1/p' intellij/build.gradle.kts)"
+          echo "tag=$tag extension=$extension plugin=$plugin"
+          test "$tag" = "$extension" && test "$tag" = "$plugin"
+
+      - name: Compile the shared core and the VS Code extension
+        run: |
+          npm ci
+          npm run compile
+
+      - name: Package the VS Code extension
+        run: |
+          mkdir -p dist
+          npx vsce package --out dist/code-story-walkthrough.vsix
+
+      - name: Build the IntelliJ plugin
+        working-directory: intellij
+        run: ./gradlew buildPlugin --console=plain
+
+      - name: Collect the IntelliJ plugin
+        run: cp intellij/build/distributions/code-story-walkthrough-*.zip dist/code-story-walkthrough-intellij.zip
+
+      - name: Package the agent skill
+        run: |
+          tar -czf dist/code-stories-skill.tar.gz -C skill code-stories
+          (cd skill && zip -qr ../dist/code-stories-skill.zip code-stories)
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "Code Story Walkthrough $GITHUB_REF_NAME" --generate-notes

@@ -6,3 +6,7 @@ tsconfig.json
 .gitignore
 **/*.map
 .stories/**
+intellij/**
+docs/**
+.github/**
+dist/**
