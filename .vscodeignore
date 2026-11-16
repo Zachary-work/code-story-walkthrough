@@ -7,3 +7,6 @@ tsconfig.json
 **/*.map
 .stories/**
 intellij/**
+docs/**
+.github/**
+dist/**

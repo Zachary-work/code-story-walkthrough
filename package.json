@@ -4,6 +4,10 @@
   "description": "Review a change as stories: each one starts at an entry point and follows the calls down to the code that changed. Works with an AI agent skill that writes the stories and answers your review comments.",
   "version": "0.4.0",
   "publisher": "code-story-walkthrough",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zachary-work/code-story-walkthrough.git"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
