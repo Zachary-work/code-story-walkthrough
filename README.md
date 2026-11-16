@@ -1,6 +1,10 @@
-# Code Story Walkthrough
+<p align="center">
+  <img src="docs/images/icon.png" width="96" height="96" alt="Code Stories icon: a campfire">
+</p>
 
-Review AI-written code in the order it runs.
+<h1 align="center">Code Story Walkthrough</h1>
+
+<p align="center">Review AI-written code in the order it runs.</p>
 
 Code Stories shows a change as a set of stories. Each story starts at an entry point and follows
 the calls down to the code that changed. It works in VS Code and IntelliJ, with Claude Code and

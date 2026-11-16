@@ -2,7 +2,8 @@
   "name": "code-story-walkthrough",
   "displayName": "Code Story Walkthrough",
   "description": "Review a change as stories: each one starts at an entry point and follows the calls down to the code that changed. Works with an AI agent skill that writes the stories and answers your review comments.",
-  "version": "0.4.0",
+  "version": "0.4.1",
+  "icon": "media/icon.png",
   "publisher": "code-story-walkthrough",
   "repository": {
     "type": "git",
@@ -125,7 +126,7 @@
     "viewsWelcome": [
       {
         "view": "codeStories.stories",
-        "contents": "No stories in this workspace yet.\n\nStories are written by your AI agent into .stories/, one folder per change. Install the skill, then ask the agent: \"Create code stories for this branch\".\n\n[Install Agent Skill](command:codeStories.installSkill)\n\n[Open Story Panel](command:codeStories.open)"
+        "contents": "No stories in this workspace yet.\n\nStories are written by your AI agent into .stories/, one folder per change. Install the skill, then ask the agent: \"/code-stories create stories for this branch\".\n\n[Install Agent Skill](command:codeStories.installSkill)\n\n[Open Story Panel](command:codeStories.open)"
       }
     ],
     "menus": {

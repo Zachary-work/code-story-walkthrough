@@ -173,6 +173,6 @@ async function installSkill(context: vscode.ExtensionContext, folder?: vscode.Wo
   }
   fs.cpSync(path.join(context.extensionPath, 'skill', SKILL_NAME), dest, { recursive: true });
   void vscode.window.showInformationMessage(
-    `Installed the skill to ${dest}. Ask your agent: "Create code stories for this branch".`
+    `Installed the skill to ${dest}. Ask your agent: "/code-stories create stories for this branch".`
   );
 }

@@ -249,7 +249,7 @@ function installSkill(where: string): void {
   const dest = path.join(base, 'code-stories');
   fs.rmSync(dest, { recursive: true, force: true });
   fs.cpSync(skillDir, dest, { recursive: true });
-  say('info', `Installed the skill to ${dest}. Ask your agent: "Create code stories for this branch".`);
+  say('info', `Installed the skill to ${dest}. Ask your agent: "/code-stories create stories for this branch".`);
 }
 
 async function command(m: any): Promise<void> {

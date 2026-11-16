@@ -2,9 +2,9 @@ import * as path from 'path';
 import { statusLabel } from './model';
 import { Session } from './session';
 
-export const AGENT_PROMPT = 'Read and address my review comments';
-export const CREATE_PROMPT = 'Create code stories for this branch';
-export const REFRESH_PROMPT = 'Refresh the code stories so every changed line is covered';
+export const AGENT_PROMPT = '/code-stories read and address my review comments';
+export const CREATE_PROMPT = '/code-stories create stories for this branch';
+export const REFRESH_PROMPT = '/code-stories refresh the stories so every changed line is covered';
 export const MISSING_REASON = 'Missing from the stories file';
 
 /** Everything the story panel draws. The same object goes to the panel in every editor. */
