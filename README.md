@@ -3,6 +3,12 @@
 Review a code change as a set of stories. Each story starts at an entry point and follows the
 calls down to the code that changed.
 
+**Website:** [zachary-work.github.io/code-story-walkthrough](https://zachary-work.github.io/code-story-walkthrough/)
+· [Get started](https://zachary-work.github.io/code-story-walkthrough/get-started.html)
+· [Tour](https://zachary-work.github.io/code-story-walkthrough/tour.html)
+· [Agent skill](https://zachary-work.github.io/code-story-walkthrough/skill.html)
+· [Try the panel](https://zachary-work.github.io/code-story-walkthrough/demo/)
+
 ![A reviewer steps through one story. The editor follows each step.](docs/images/walkthrough.gif)
 
 *One story, step by step. The editor on the left follows the story panel on the right.*
@@ -102,10 +108,10 @@ story shows. You do not have to trust that the stories are complete.
 
 ## Try the panel
 
-The story panel is a web page. You can try it without an install.
+The story panel is a web page. You can try it without an install:
+[open the panel in your browser](https://zachary-work.github.io/code-story-walkthrough/demo/).
 
-1. Clone this repository.
-2. Open `docs/demo/index.html` in a browser.
+If you have a clone of this repository, you can also open `docs/demo/index.html` in a browser.
 
 The page contains the real panel and sample stories. A line at the top tells you what the editor
 would do.

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tour: Code Stories</title>
+<meta name="description" content="The Code Stories review, screen by screen: the overview, the steps of a story, hidden changes, removed code, comments and re-review.">
+<link rel="icon" href="images/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+
+<header class="site-header">
+<div class="wrap">
+<a class="brand" href="./"><img src="images/icon.svg" alt="" width="26" height="26">Code Stories</a>
+<nav class="site-nav" aria-label="Main">
+<a href="tour.html" aria-current="page">Tour</a>
+<a href="skill.html">Agent skill</a>
+<a href="get-started.html">Get started</a>
+<a href="https://github.com/Zachary-work/code-story-walkthrough">GitHub</a>
+<a class="install" href="get-started.html">Install</a>
+</nav>
+</div>
+</header>
+
+<main>
+<section class="wrap page-head">
+<p class="eyebrow">Tour</p>
+<h1>The review, screen by screen.</h1>
+<p class="lead">The screens show the IntelliJ plugin. The VS Code extension shows the same panel.</p>
+<div class="actions" style="margin-top: 24px"><a class="btn" href="demo/">Or try the panel in your browser</a></div>
+</section>
+
+<section class="wrap tour">
+
+<article>
+<div>
+<p class="count">1 of 8</p>
+<h2>Start at the overview</h2>
+<p class="body">The overview has four counters. Each counter is also a tab: stories, lines, tests and comments.</p>
+<p class="body">Every changed line is counted. You see the lines that no step shows, and the stories that have no test.</p>
+</div>
+<div class="wide shots">
+<img class="shot crop" src="images/overview.png" width="592" height="470" alt="The story list">
+<img class="shot crop" src="images/lines-not-seen.png" width="592" height="817" alt="Changed lines that no story shows">
+<img class="shot crop" src="images/tests.png" width="592" height="470" alt="Tests for each story">
+</div>
+</article>
+
+<article>
+<div>
+<p class="count">2 of 8</p>
+<h2>Read a story, one step at a time</h2>
+<p class="body">Only the current step is open. The other steps are one line each.</p>
+<ul class="body">
+<li>Green lines are new or changed. Red lines are removed.</li>
+<li>The editor opens the same file at the same line.</li>
+<li>Each step shows a sample input and output.</li>
+<li>Select <strong>Next step</strong> to follow the call.</li>
+</ul>
+</div>
+<div class="wide"><img class="shot" src="images/story-step.png" width="1345" height="817" alt="Step 2 of a story, with the editor at the same code"></div>
+</article>
+
+<article>
+<div>
+<p class="count">3 of 8</p>
+<h2>See what an excerpt leaves out</h2>
+<p class="body">A step shows an excerpt, not the full function. The panel marks each gap.</p>
+<p class="body">A grey gap hides unchanged lines. An <strong class="warn">orange gap</strong> hides changed lines. The panel also warns you before you mark the story as reviewed.</p>
+</div>
+<div class="wide"><img class="shot" src="images/hidden-changes.png" width="1345" height="817" alt="A gap that hides changed lines is shown in orange"></div>
+</article>
+
+<article>
+<div>
+<p class="count">4 of 8</p>
+<h2>See the code that the change removed</h2>
+<p class="body">Removed code has no line in the current file. A story can still show it as a step. The editor opens the file as it was on the base branch.</p>
+</div>
+<div class="wide"><img class="shot" src="images/removed-code.png" width="1345" height="817" alt="A removed function, shown from the base branch"></div>
+</article>
+
+<article>
+<div>
+<p class="count">5 of 8</p>
+<h2>Look where the agent was not sure</h2>
+<p class="body">The agent lists the places that need a careful look. Each item opens its step. These are pointers, not a verdict.</p>
+<p class="body">The diagram shows the call path of the story. Filled boxes contain changed code.</p>
+</div>
+<div class="wide shots">
+<img class="shot" style="flex-basis: 240px" src="images/look-closely.png" width="592" height="520" alt="Concerns that the agent wrote">
+<img class="shot" style="flex-basis: 240px" src="images/diagram.png" width="592" height="620" alt="Sequence diagram of the story">
+</div>
+</article>
+
+<article>
+<div>
+<p class="count">6 of 8</p>
+<h2>Compare with the base</h2>
+<p class="body">Select <strong>Open diff in editor</strong> to see the full diff of a file against the base branch.</p>
+</div>
+<div class="wide"><img class="shot" src="images/diff.png" width="1345" height="817" alt="The diff of one file against the base"></div>
+</article>
+
+<article>
+<div>
+<p class="count">7 of 8</p>
+<h2>Write a comment</h2>
+<p class="body">Select lines in the editor and add a review comment. A comment has two possible destinations:</p>
+<ul class="body">
+<li><strong>Local.</strong> The plugin saves it for your agent.</li>
+<li><strong>Pull request.</strong> The plugin posts it to GitHub. This needs the <a href="https://cli.github.com"><strong>gh CLI</strong></a>.</li>
+</ul>
+<p class="body">Then tell the agent to read and address your comments. The agent answers in the same thread.</p>
+</div>
+<div class="wide"><img class="shot" src="images/comments.png" width="1345" height="817" alt="A comment thread in the gutter of the editor"></div>
+</article>
+
+<article>
+<div>
+<p class="count">8 of 8</p>
+<h2>Review only what changed</h2>
+<p class="body">Mark each story as reviewed. If the agent changes a reviewed story, the panel shows <strong>Changed since review</strong>.</p>
+</div>
+<div class="wide stack">
+<div class="card"><h3>Only the new work</h3><p>The panel marks the steps that changed and the lines that you did not read.</p></div>
+<div class="card"><h3>Moved code is not a change</h3><p>Code that only moved to a different line does not count as a change.</p></div>
+</div>
+</article>
+
+</section>
+
+<section class="dark">
+<div class="wrap cta">
+<h2>Use it on your next change.</h2>
+<a class="btn light" href="get-started.html">Get started</a>
+</div>
+</section>
+</main>
+
+<footer class="site-footer">
+<div class="wrap">
+<span>Code Story Walkthrough</span>
+<nav aria-label="Footer"><a href="tour.html">Tour</a><a href="skill.html">Agent skill</a><a href="get-started.html">Get started</a><a href="https://github.com/Zachary-work/code-story-walkthrough">GitHub</a></nav>
+</div>
+</footer>
+<script src="site.js"></script>
+</body>
+</html>

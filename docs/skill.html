@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The agent skill: Code Stories</title>
+<meta name="description" content="The code-stories skill teaches your agent to write stories for a change, to check them against the diff, and to answer your review comments.">
+<link rel="icon" href="images/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+
+<header class="site-header">
+<div class="wrap">
+<a class="brand" href="./"><img src="images/icon.svg" alt="" width="26" height="26">Code Stories</a>
+<nav class="site-nav" aria-label="Main">
+<a href="tour.html">Tour</a>
+<a href="skill.html" aria-current="page">Agent skill</a>
+<a href="get-started.html">Get started</a>
+<a href="https://github.com/Zachary-work/code-story-walkthrough">GitHub</a>
+<a class="install" href="get-started.html">Install</a>
+</nav>
+</div>
+</header>
+
+<main>
+<section class="wrap page-head">
+<p class="eyebrow">The agent skill</p>
+<h1>Three prompts. The skill does the rest.</h1>
+<p class="lead">The <code>code-stories</code> skill teaches your agent to write the stories and to answer your comments. It works with Claude Code and with other agents that read skill folders.</p>
+</section>
+
+<section class="wrap prompts cards">
+<div class="card">
+<div><h2>Create the stories</h2><p>After the agent finishes a change on a branch.</p></div>
+<div class="code"><div class="code-head"><span>Prompt</span></div><pre class="prompt">Create code stories for this branch</pre></div>
+</div>
+<div class="card">
+<div><h2>Answer your comments</h2><p>After you write review comments in the editor.</p></div>
+<div class="code"><div class="code-head"><span>Prompt</span></div><pre class="prompt">Read and address my review comments</pre></div>
+</div>
+<div class="card">
+<div><h2>Refresh the stories</h2><p>When the panel tells you that the code changed after the stories were written.</p></div>
+<div class="code"><div class="code-head"><span>Prompt</span></div><pre class="prompt">Refresh the code stories so every changed line is covered</pre></div>
+</div>
+</section>
+
+<section class="band">
+<div class="wrap pad split">
+<div>
+<p class="eyebrow">Create the stories</p>
+<h2>What the agent does when you ask for stories.</h2>
+<p class="body">The agent reads the real files. It does not guess a call path from names. If the validator finds an error, the agent goes back and corrects the steps.</p>
+</div>
+<ol class="path tight">
+<li><h3>Find the change</h3><p>The git diff from the merge base.</p></li>
+<li><h3>Read the changed code and its callers</h3><p>Up to an entry point.</p></li>
+<li><h3>Group the change into stories</h3><p>One behaviour, one call path.</p></li>
+<li><h3>Write the steps</h3><p>One function per step, signature first.</p></li>
+<li><h3>Add a sample, the tests, and the places to look closely</h3><p>Sample values come from a test when a test exists.</p></li>
+<li><h3>List the files that are in no story</h3><p>Each file with a reason.</p></li>
+<li><h3>Run the validator</h3><p>Correct every error, then tell you the result.</p></li>
+</ol>
+</div>
+</section>
+
+<section class="wrap pad split">
+<div>
+<p class="eyebrow">The validator</p>
+<h2>A script keeps the agent honest.</h2>
+<p class="body">The skill includes a script that compares the stories with the git diff. The validator makes sure that:</p>
+<ul class="body">
+<li>Each quoted line is in the file, at that line number.</li>
+<li>A changed line is not labelled as unchanged.</li>
+<li>Each named test exists.</li>
+<li>Each changed file is in a story, or is left out with a reason.</li>
+</ul>
+</div>
+<div class="code wide">
+<div class="code-head"><span>Terminal</span></div>
+<pre>$ node skill/code-stories/scripts/validate.mjs
+Story set: feature-promo-codes
+Changed lines in storied files: 30 of 42 are shown in a step
+<span class="t-warn">warning: stories[2] (record-use): no tests listed.</span>
+<span class="t-warn">warning: src/pricingEngine.js: 5 changed line(s) are in no step (5-7, 12-13).</span>
+<span class="t-dim">... (4 more warnings)</span>
+<span class="t-err">error: src/metrics.js changed since main but is in no story and not in unstoried.files</span>
+3 stories, 1 error(s), 6 warning(s)</pre>
+</div>
+</section>
+
+<section class="dark">
+<div class="wrap pad">
+<p class="eyebrow">Answer your comments</p>
+<h2 style="max-width: 720px">Each comment gets one of three answers, in the same thread.</h2>
+<div class="cards" style="margin-top: 40px">
+<div class="card"><h3 class="tag changed">changed</h3><p>The comment is correct. The agent changed the code and says where.</p></div>
+<div class="card"><h3 class="tag declined">declined</h3><p>The agent did not change the code. It gives the reason.</p></div>
+<div class="card"><h3 class="tag answered">answered</h3><p>The comment was a question. The agent answers it.</p></div>
+</div>
+<p class="body" style="margin-top: 28px">Only you resolve a thread. The agent does not close your comments.</p>
+</div>
+</section>
+
+<section class="wrap pad split">
+<div>
+<p class="eyebrow">Story sets</p>
+<h2>Each change has its own folder.</h2>
+<p class="body">Two changes that you work on at the same time do not overwrite each other. The folder has the name of the branch. The panel shows the stories of the branch that is checked out.</p>
+<p class="body small">The stories are review data for your working copy. Add <code>.stories/</code> to <code>.gitignore</code>, unless you want to share the stories with the pull request.</p>
+</div>
+<pre class="plain wide">.stories/
+  feature-promo-codes/
+    stories.json      <span>the agent writes it</span>
+    comments.json     <span>you and the agent write it</span>
+  fix-tax-rounding/
+    stories.json
+    comments.json</pre>
+</section>
+
+<section class="band">
+<div class="wrap cta">
+<h2 style="font-size: 30px">Install the skill with one command.</h2>
+<a class="btn primary" href="get-started.html">Get started</a>
+</div>
+</section>
+</main>
+
+<footer class="site-footer">
+<div class="wrap">
+<span>Code Story Walkthrough</span>
+<nav aria-label="Footer"><a href="tour.html">Tour</a><a href="skill.html">Agent skill</a><a href="get-started.html">Get started</a><a href="https://github.com/Zachary-work/code-story-walkthrough">GitHub</a></nav>
+</div>
+</footer>
+<script src="site.js"></script>
+</body>
+</html>

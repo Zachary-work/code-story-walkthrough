@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get started: Code Stories</title>
+<meta name="description" content="Install the code-stories agent skill and the Code Stories plugin for VS Code or IntelliJ, then create your first stories.">
+<link rel="icon" href="images/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+
+<header class="site-header">
+<div class="wrap">
+<a class="brand" href="./"><img src="images/icon.svg" alt="" width="26" height="26">Code Stories</a>
+<nav class="site-nav" aria-label="Main">
+<a href="tour.html">Tour</a>
+<a href="skill.html">Agent skill</a>
+<a href="get-started.html" aria-current="page">Get started</a>
+<a href="https://github.com/Zachary-work/code-story-walkthrough">GitHub</a>
+<a class="install" href="get-started.html">Install</a>
+</nav>
+</div>
+</header>
+
+<main>
+<section class="wrap narrow page-head">
+<p class="eyebrow">Get started</p>
+<h1>Three steps to your first stories.</h1>
+<p class="lead">You install the agent skill and the plugin for your editor. Each command downloads a file from the <a href="https://github.com/Zachary-work/code-story-walkthrough/releases/latest"><strong>latest release</strong></a>. You do not have to clone the repository.</p>
+<div class="needs">
+<span><strong>You need:</strong> <a href="https://nodejs.org">Node.js</a> on your PATH</span>
+<span><strong>Editor:</strong> VS Code, or an IntelliJ-based IDE 2026.3 or later</span>
+<span><strong>Agent:</strong> Claude Code, or an agent that reads skill folders</span>
+</div>
+</section>
+
+<section class="wrap narrow">
+<ol class="steps">
+
+<li>
+<h2>Install the agent skill</h2>
+<p class="body">The skill is a folder of text files and scripts. The commands put it in <code>~/.claude/skills</code>, where Claude Code finds it for all your projects.</p>
+<div class="code" style="margin-top: 20px">
+<div class="code-head"><span>macOS and Linux</span></div>
+<pre>mkdir -p ~/.claude/skills
+curl -fsSL https://github.com/Zachary-work/code-story-walkthrough/releases/latest/download/code-stories-skill.tar.gz | tar -xz -C ~/.claude/skills</pre>
+</div>
+<div class="code">
+<div class="code-head"><span>Windows (PowerShell)</span></div>
+<pre>New-Item -ItemType Directory -Force "$HOME\.claude\skills" | Out-Null
+curl.exe -fsSL -o "$env:TEMP\code-stories-skill.tar.gz" https://github.com/Zachary-work/code-story-walkthrough/releases/latest/download/code-stories-skill.tar.gz
+tar -xzf "$env:TEMP\code-stories-skill.tar.gz" -C "$HOME\.claude\skills"</pre>
+</div>
+<ul class="body small">
+<li>For one project only, use <code>.claude/skills</code> in that project as the target folder.</li>
+<li>For agents other than Claude Code, use <code>.agents/skills</code>.</li>
+<li>To update the skill, run the same commands again.</li>
+</ul>
+</li>
+
+<li>
+<h2>Install the plugin for your editor</h2>
+<p class="body">The two editors show the same story panel.</p>
+<div class="cards">
+<div class="card">
+<h3>VS Code</h3>
+<div class="code">
+<div class="code-head"><span>Terminal</span></div>
+<pre>curl -fsSL -o code-story-walkthrough.vsix https://github.com/Zachary-work/code-story-walkthrough/releases/latest/download/code-story-walkthrough.vsix
+code --install-extension code-story-walkthrough.vsix</pre>
+</div>
+<p>On Windows PowerShell, write <code>curl.exe</code> instead of <code>curl</code>. Then run <strong>Code Stories: Open Story Panel</strong> from the command palette.</p>
+</div>
+<div class="card">
+<h3>IntelliJ</h3>
+<ol class="body small">
+<li>Download the plugin zip file. Do not unzip it.</li>
+<li>In the IDE, open <strong>Settings &gt; Plugins</strong>, select the gear icon, then <strong>Install Plugin from Disk</strong>.</li>
+<li>Select the zip file, then restart the IDE.</li>
+</ol>
+<a class="btn" href="https://github.com/Zachary-work/code-story-walkthrough/releases/latest/download/code-story-walkthrough-intellij.zip">Download the IntelliJ plugin</a>
+<p>The <strong>Code Stories</strong> tool window is on the right. <strong>Tools &gt; Code Stories</strong> contains the commands.</p>
+</div>
+</div>
+</li>
+
+<li>
+<h2>Create your first stories</h2>
+<p class="body">Open a project that has a change on a branch. Tell your agent:</p>
+<div class="code" style="margin-top: 20px">
+<div class="code-head"><span>Prompt</span></div>
+<pre class="prompt">Create code stories for this branch</pre>
+</div>
+<p class="body">Then open the story panel in your editor. The panel shows the stories of the branch that is checked out.</p>
+<img class="shot" src="images/story-step.png" width="1345" height="817" alt="A story open in the panel, with the editor at the same code">
+</li>
+</ol>
+</section>
+
+<section class="band">
+<div class="wrap narrow" style="padding-top: 72px; padding-bottom: 72px">
+<h2 style="font-size: 28px">What to do next</h2>
+<div class="cards" style="margin-top: 28px; gap: 20px">
+<a class="card tint" href="tour.html"><strong>Take the tour</strong><span>The review, screen by screen.</span></a>
+<a class="card tint" href="skill.html"><strong>Learn the three prompts</strong><span>Create stories, answer comments, refresh.</span></a>
+<a class="card tint" href="demo/"><strong>Try the panel first</strong><span>The real panel in your browser, with sample stories.</span></a>
+</div>
+</div>
+</section>
+</main>
+
+<footer class="site-footer">
+<div class="wrap">
+<span>Code Story Walkthrough</span>
+<nav aria-label="Footer"><a href="tour.html">Tour</a><a href="skill.html">Agent skill</a><a href="get-started.html">Get started</a><a href="https://github.com/Zachary-work/code-story-walkthrough">GitHub</a></nav>
+</div>
+</footer>
+<script src="site.js"></script>
+</body>
+</html>
