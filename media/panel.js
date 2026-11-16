@@ -23,6 +23,160 @@
     return `${n} ${n === 1 ? one : many}`;
   }
 
+  // Syntax colours for the code of a step. A step shows a few lines of a file, not the file, so
+  // this is a small scanner that works line by line: comments, strings, numbers, keywords, types
+  // and function names. It is the same code in VS Code, IntelliJ and the demo page.
+  const HL = (function () {
+    const words = text => new Set(text.split(' '));
+    const KEYWORDS = words('abstract as assert async await break case catch class const constructor continue debugger def default defer del delete do elif else elsif end enum except export extends final finally fn for foreach from fun func function go goto if impl implements import in inline instanceof interface internal is lambda let loop match mod module mut namespace new not object of open operator or and override package pass private protected pub public raise readonly require return sealed static struct super suspend switch then throw throws trait try type typeof unless until use using val var virtual void when where while with yield');
+    const LITERALS = words('true false null nil None True False undefined NaN this self');
+    const PRIMITIVES = words('int long float double string boolean bool char byte short str number any unknown never bigint symbol i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 usize isize');
+    const SQL = words('select from where insert into values update set delete create table alter drop join left right inner outer on group by order having limit as and or not null primary key distinct union index view begin commit rollback case when then else end');
+    const C = { line: ['//'], block: [['/*', '*/']], quotes: '"\'`' };
+    const FAMILIES = [
+      ['js jsx ts tsx mjs cjs java kt kts c h cc cpp hpp cs go swift php scala dart groovy gradle proto', C],
+      ['rs', { line: ['//'], block: [['/*', '*/']], quotes: '"' }],
+      ['py rb sh bash zsh yml yaml toml pl r ex exs tf', { line: ['#'], block: [], quotes: '"\'', triple: true }],
+      ['sql', { line: ['--'], block: [['/*', '*/']], quotes: '\'"', sql: true }],
+      ['lua hs', { line: ['--'], block: [], quotes: '"\'' }],
+      ['css scss less', { line: [], block: [['/*', '*/']], quotes: '"\'' }],
+      ['html htm xml vue svelte', { line: [], block: [['<!--', '-->']], quotes: '"\'' }],
+      ['json', { line: [], block: [], quotes: '"' }]
+    ];
+    const BY_EXT = new Map();
+    for (const [exts, family] of FAMILIES) {
+      for (const ext of exts.split(' ')) {
+        BY_EXT.set(ext, family);
+      }
+    }
+    const IDENT = /[A-Za-z_$][\w$]*/y;
+    const NUMBER = /(0[xX][\da-fA-F_]+|\d[\d_]*(\.\d+)?([eE][+-]?\d+)?)[a-zA-Z]*/y;
+
+    /** The rules for a file, from its extension; undefined for a file that is not code. */
+    function family(file) {
+      const name = String(file || '').split(/[\\/]/).pop().toLowerCase();
+      if (name === 'dockerfile' || name === 'makefile') {
+        return BY_EXT.get('sh');
+      }
+      return BY_EXT.get(name.includes('.') ? name.split('.').pop() : '');
+    }
+
+    /** One line as HTML. `carry.open` holds a comment or string that is still open from the line before. */
+    function line(text, rules, carry) {
+      if (!rules) {
+        return esc(text);
+      }
+      let out = '';
+      let plain = '';
+      const flush = () => { out += esc(plain); plain = ''; };
+      const put = (cls, s) => { flush(); out += `<span class="t-${cls}">${esc(s)}</span>`; };
+      let i = 0;
+      if (carry.open) {
+        const end = text.indexOf(carry.open.end);
+        if (end < 0) {
+          put(carry.open.cls, text);
+          return out;
+        }
+        i = end + carry.open.end.length;
+        put(carry.open.cls, text.slice(0, i));
+        carry.open = null;
+      }
+      scan: while (i < text.length) {
+        const ch = text[i];
+        if (text[i - 1] !== '\\') {
+          for (const mark of rules.line) {
+            if (text.startsWith(mark, i)) {
+              put('com', text.slice(i));
+              return out;
+            }
+          }
+        }
+        const blocks = rules.triple ? [['"""', '"""', 'str'], ["'''", "'''", 'str']] : rules.block.map(b => [b[0], b[1], 'com']);
+        for (const [start, stop, cls] of blocks) {
+          if (text.startsWith(start, i)) {
+            const end = text.indexOf(stop, i + start.length);
+            if (end < 0) {
+              put(cls, text.slice(i));
+              carry.open = { end: stop, cls };
+              return out;
+            }
+            put(cls, text.slice(i, end + stop.length));
+            i = end + stop.length;
+            continue scan;
+          }
+        }
+        if (rules.quotes.includes(ch)) {
+          let end = i + 1;
+          while (end < text.length && text[end] !== ch) {
+            end += text[end] === '\\' ? 2 : 1;
+          }
+          if (end < text.length) {
+            put('str', text.slice(i, end + 1));
+            i = end + 1;
+            continue;
+          }
+          if (ch === '`') {
+            put('str', text.slice(i));
+            carry.open = { end: '`', cls: 'str' };
+            return out;
+          }
+          if (ch === '"') {
+            put('str', text.slice(i));
+            return out;
+          }
+          // A lone apostrophe is not a string.
+          plain += ch;
+          i++;
+          continue;
+        }
+        if (ch >= '0' && ch <= '9' && !/[\w$]/.test(text[i - 1] || '')) {
+          NUMBER.lastIndex = i;
+          const m = NUMBER.exec(text);
+          if (m) {
+            put('num', m[0]);
+            i += m[0].length;
+            continue;
+          }
+        }
+        if (ch === '@' && /[A-Za-z_]/.test(text[i + 1] || '')) {
+          IDENT.lastIndex = i + 1;
+          const m = IDENT.exec(text);
+          put('meta', '@' + m[0]);
+          i += m[0].length + 1;
+          continue;
+        }
+        IDENT.lastIndex = i;
+        const m = IDENT.exec(text);
+        if (m) {
+          const word = m[0];
+          i += word.length;
+          const key = rules.sql ? word.toLowerCase() : word;
+          if (text[i - word.length - 1] === '.' && !LITERALS.has(word)) {
+            // A member name: a function when it is called, otherwise plain.
+            if (/^\s*\(/.test(text.slice(i))) { put('fn', word); } else { plain += word; }
+          } else if (rules.sql ? SQL.has(key) : KEYWORDS.has(word)) {
+            put('kw', word);
+          } else if (LITERALS.has(word)) {
+            put('lit', word);
+          } else if (/^\s*\(/.test(text.slice(i))) {
+            put('fn', word);
+          } else if (PRIMITIVES.has(word) || /^[A-Z][A-Za-z0-9]*[a-z][A-Za-z0-9]*$/.test(word)) {
+            put('type', word);
+          } else {
+            plain += word;
+          }
+          continue;
+        }
+        plain += ch;
+        i++;
+      }
+      flush();
+      return out;
+    }
+
+    return { family, line };
+  })();
+
   function delta(additions, deletions) {
     return [additions ? `+${additions}` : '', deletions ? `−${deletions}` : ''].filter(Boolean).join(' ');
   }
@@ -344,6 +498,30 @@
     const fresh = new Set(info.fresh);
     // The excerpt leaves lines out. Say so wherever it does, and whether the hidden lines changed.
     let shown = 0;
+    const rules = HL.family(step.file);
+    // A comment or a string can run over several lines. It carries on only while the lines follow
+    // each other; removed lines are old code, so they do not take part.
+    let carry = { open: null };
+    let lastNo = 0;
+    const coloured = state.hl && state.hl.story === state.storyIndex && state.hl.step === i ? state.hl.lines : null;
+    const highlight = (l, li) => {
+      // The editor's own colours, when the editor sent them. Otherwise the scanner above.
+      const spans = coloured && coloured[li];
+      if (spans) {
+        return spans.map(([text, colour, style]) => colour || style
+          ? `<span style="${colour ? `color:${esc(colour)};` : ''}${style & 1 ? 'font-style:italic;' : ''}${style & 2 ? 'font-weight:bold;' : ''}">${esc(text)}</span>`
+          : esc(text)).join('');
+      }
+      const no = step.removed ? l.was : l.line;
+      if (l.kind === 'del' && !step.removed) {
+        return HL.line(l.text, rules, { open: null });
+      }
+      if (no !== lastNo + 1) {
+        carry = { open: null };
+      }
+      lastNo = no;
+      return HL.line(l.text, rules, carry);
+    };
     return step.lines.map((l, li) => {
       const at = step.removed ? l.was : l.line ?? l.at;
       const target = at ?? step.focusLine;
@@ -369,7 +547,7 @@
       const sign = off ? '!' : l.kind === 'add' ? '+' : l.kind === 'del' ? '−' : ' ';
       const cls = `line ${l.kind}${l.calls ? ' makes-call' : ''}${off ? ' stale' : ''}${fresh.has(li) ? ' fresh' : ''}${active ? ' active' : ''}`;
       return `${gap}<button class="${cls}" data-a="step" data-i="${i}" data-line="${target}"${l.calls ? ' title="Added line that calls the next step"' : ''}>
-        <span class="no">${(step.removed ? l.was : l.line) ?? ''}</span><span class="sign">${sign}</span><span class="text">${esc(l.text) || ' '}</span>
+        <span class="no">${(step.removed ? l.was : l.line) ?? ''}</span><span class="sign">${sign}</span><span class="text">${highlight(l, li) || ' '}</span>
       </button>`;
     }).join('');
   }

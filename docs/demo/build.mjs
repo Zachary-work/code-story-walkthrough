@@ -75,6 +75,7 @@ const page = `<!doctype html>
   --vscode-charts-orange: #e0984f; --vscode-charts-green: #6aab73; --vscode-charts-red: #e06c6c; --vscode-charts-yellow: #d6ae58;
   --vscode-font-family: 'Segoe UI', system-ui, sans-serif; --vscode-font-size: 13px;
   --vscode-editor-font-family: Consolas, ui-monospace, monospace; --vscode-editor-font-size: 12px;
+  --tok-kw: #569cd6; --tok-str: #ce9178; --tok-com: #6a9955; --tok-num: #b5cea8; --tok-fn: #dcdcaa; --tok-type: #4ec9b0; --tok-meta: #c586c0;
 }
 @media (prefers-color-scheme: light) {
   :root {
@@ -87,6 +88,7 @@ const page = `<!doctype html>
     --vscode-diffEditor-removedLineBackground: rgba(219,92,92,0.16); --vscode-editor-findMatchHighlightBackground: rgba(245,200,90,0.35);
     --vscode-inputValidation-warningBackground: rgba(245,180,90,0.25);
     --vscode-charts-orange: #a85d00; --vscode-charts-green: #2e7d32; --vscode-charts-red: #c62828; --vscode-charts-yellow: #9a7500;
+    --tok-kw: #0000ff; --tok-str: #a31515; --tok-com: #008000; --tok-num: #098658; --tok-fn: #795e26; --tok-type: #267f99; --tok-meta: #af00db;
   }
 }
 #demo-bar { position: sticky; top: 0; z-index: 2; box-sizing: border-box; padding: 8px 16px; border-bottom: 1px solid var(--vscode-widget-border); background: var(--vscode-sideBar-background); color: var(--vscode-foreground); font: 13px/1.5 var(--vscode-font-family); display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: space-between; }

@@ -179,7 +179,7 @@ for (const [si, story] of (Array.isArray(doc.stories) ? doc.stories : []).entrie
     if (!step.sample) warnings.push(`${w}: no sample`);
     else if (!['test', 'generated'].includes(step.sample.source)) errors.push(`${w}: sample.source must be "test" or "generated"`);
     else if (step.sample.source === 'test' && !step.sample.test) warnings.push(`${w}: sample is from a test but does not name it`);
-    if (step.sample) checkSample(step.sample, w);
+    if (step.sample) checkSample(step.sample, w, step.lines.slice(0, 8).map(l => String(l.text ?? '')).join('\n'));
     let indent;
     let indentReported = false;
     /** The lines of a step must keep their indentation: each may lose the same amount, no more. */
@@ -323,7 +323,7 @@ function stringsIn(value) {
 }
 
 /** A sample is JSON with actual values, so the reviewer sees real data, not a description of it. */
-function checkSample(sample, w) {
+function checkSample(sample, w, signature) {
   for (const key of ['input', 'output']) {
     const text = sample[key];
     if (text === undefined || text === '') {
@@ -343,6 +343,14 @@ function checkSample(sample, w) {
     }
     if (key === 'input' && (value === null || typeof value !== 'object')) {
       errors.push(`${w}: sample.input must be a JSON object: the arguments by parameter name, or the request`);
+    }
+    if (key === 'input' && value && typeof value === 'object' && !Array.isArray(value) && signature.includes('(')) {
+      // The keys are the parameters. A key that the signature does not name was made up.
+      const names = new Set(signature.match(/[A-Za-z_$][\w$]*/g) ?? []);
+      const unknown = Object.keys(value).filter(k => !names.has(k) && k !== 'this' && k !== 'self');
+      if (unknown.length) {
+        warnings.push(`${w}: sample.input has ${unknown.map(k => `"${k}"`).join(', ')}, which the function's signature does not name. Use one key for each parameter, named as the parameter`);
+      }
     }
     const vague = stringsIn(value).find(s => VAGUE.test(s));
     if (vague !== undefined) {

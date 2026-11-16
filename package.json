@@ -2,7 +2,7 @@
   "name": "code-story-walkthrough",
   "displayName": "Code Story Walkthrough",
   "description": "Review a change as stories: each one starts at an entry point and follows the calls down to the code that changed. Works with an AI agent skill that writes the stories and answers your review comments.",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "icon": "media/icon.png",
   "publisher": "code-story-walkthrough",
   "repository": {
@@ -210,5 +210,10 @@
     "@types/vscode": "1.85.0",
     "@vscode/vsce": "^3.2.0",
     "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "jsonc-parser": "^3.3.1",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2"
   }
 }

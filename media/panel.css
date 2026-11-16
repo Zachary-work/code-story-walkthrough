@@ -212,3 +212,16 @@ input { box-sizing: border-box; width: 100%; min-height: 28px; padding: 3px 8px;
 .line.makes-call { box-shadow: inset -3px 0 0 var(--vscode-charts-yellow, rgba(234, 170, 60, 0.9)); }
 .line.fresh.makes-call { box-shadow: inset 3px 0 0 var(--accent-text), inset -3px 0 0 var(--vscode-charts-yellow, rgba(234, 170, 60, 0.9)); }
 .gap.warn { color: var(--vscode-charts-orange, var(--vscode-editorWarning-foreground)); border-color: currentColor; font-weight: 600; }
+
+/* Syntax colours for the code of a step. VS Code gives the body a theme class; IntelliJ and the
+   demo page set the --tok-* variables themselves. */
+body.vscode-dark, body.vscode-high-contrast:not(.vscode-high-contrast-light) {
+  --tok-kw: #569cd6; --tok-str: #ce9178; --tok-com: #6a9955; --tok-num: #b5cea8; --tok-fn: #dcdcaa; --tok-type: #4ec9b0; --tok-meta: #c586c0;
+}
+.t-kw, .t-lit { color: var(--tok-kw, #0000ff); }
+.t-str { color: var(--tok-str, #a31515); }
+.t-com { color: var(--tok-com, #008000); font-style: italic; }
+.t-num { color: var(--tok-num, #098658); }
+.t-fn { color: var(--tok-fn, #795e26); }
+.t-type { color: var(--tok-type, #267f99); }
+.t-meta { color: var(--tok-meta, #af00db); }

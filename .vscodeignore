@@ -2,6 +2,9 @@
 src/**
 example/**
 node_modules/**
+!node_modules/vscode-textmate/**
+!node_modules/vscode-oniguruma/**
+!node_modules/jsonc-parser/**
 tsconfig.json
 .gitignore
 **/*.map

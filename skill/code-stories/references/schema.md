@@ -47,8 +47,8 @@ numbers are 1-based.
           "sample": {
             "source": "test",
             "test": "CheckoutControllerIT.quoteWithPromo",
-            "input": "{\n  \"method\": \"POST\",\n  \"path\": \"/api/checkout/quote\",\n  \"body\": {\n    \"cartId\": \"c_8841\",\n    \"promoCode\": \"SPRING15\"\n  }\n}",
-            "output": "{\n  \"status\": 200,\n  \"body\": {\n    \"subtotal\": \"120.00\",\n    \"discount\": \"18.00\",\n    \"total\": \"110.16\"\n  }\n}",
+            "input": "{\n  \"request\": {\n    \"cartId\": \"c_8841\",\n    \"promoCode\": \"SPRING15\"\n  }\n}",
+            "output": "{\n  \"subtotal\": \"120.00\",\n  \"discount\": \"18.00\",\n  \"total\": \"110.16\"\n}",
             "note": "The promoCode field is new in this change."
           }
         },
@@ -162,11 +162,33 @@ they have in the file.
 The panel shows the string as it is. The validator parses both and rejects text that is not
 JSON.
 
+A sample follows the signature of the step's function. Read the definition of each type in the
+signature, and give values of those types.
+
 | Field | Content |
 | --- | --- |
-| `input` | A JSON object. For a function: one key per parameter, by name. For an HTTP entry point: `{ "method", "path", "body" }`. For an event or a command: the payload or the arguments. |
-| `output` | What the function returns, as JSON. For an HTTP entry point: `{ "status", "body" }`. If it returns nothing: what it changed, such as `{ "saved": { ... } }`. If it throws in this scenario: `{ "throws": { "type", "message" } }`. |
+| `input` | A JSON object with one key for each parameter, named as the parameter is named. Each value has the shape of the parameter's declared type. A method that reads its object's state can add a `this` or `self` key. A parameter that is only written to, such as `res`, can be left out. |
+| `output` | A value with the shape of the declared return type. For `Promise<T>`, `Optional<T>` and similar wrappers: the `T` value, or `null`. For no return value: `null`, with the change described in `note`. For a handler that answers through a response object: the response it sends, `{ "status", "body" }`. If it throws in this scenario: `{ "throws": { "type", "message" } }`. |
 | `note` | Optional plain text. Explanations go here, not in `input` or `output`. |
+
+Example, for `public Money apply(PricingContext ctx, Money subtotal)`, where `Money` is
+`{ amount, currency }`:
+
+```json
+{
+  "ctx": {
+    "customer": { "tier": "STANDARD" },
+    "promo": { "code": "SPRING15", "percentOff": 15 }
+  },
+  "subtotal": { "amount": "120.00", "currency": "CAD" }
+}
+```
+
+The output is a `Money`: `{ "amount": "18.00", "currency": "CAD" }`. It is not `18`, and not
+`"18.00 CAD"`.
+
+Use the field names that the type declares. Do not invent a field. The validator warns when a
+key of `input` is not a name in the function's signature.
 
 Every value is an actual value. Do not write a description in place of a value.
 

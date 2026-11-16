@@ -4,7 +4,9 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -65,6 +67,7 @@ class StoriesToolWindowFactory : ToolWindowFactory, DumbAware {
         val load = { browser.loadHTML(page(core, query)) }
         core.listen(browser) { m ->
             if (m.get("type").asString == "state") {
+                StepColours.add(project, m)
                 post(browser, m)
             }
         }
@@ -142,6 +145,18 @@ class StoriesToolWindowFactory : ToolWindowFactory, DumbAware {
             "editor-font-family" to "'${scheme.editorFontName}', ui-monospace, monospace",
             "editor-font-size" to "${scheme.editorFontSize}px"
         )
-        return ":root { color-scheme: ${if (dark) "dark" else "light"}; " + vars.entries.joinToString(" ") { "--vscode-${it.key}: ${it.value};" } + " }"
+        // The colours of the editor's own syntax highlighting, for the code in a step.
+        fun token(key: TextAttributesKey, fallback: String) = hex(scheme.getAttributes(key)?.foregroundColor, fallback)
+        val tokens = linkedMapOf(
+            "kw" to token(DefaultLanguageHighlighterColors.KEYWORD, if (dark) "#cf8e6d" else "#0033b3"),
+            "str" to token(DefaultLanguageHighlighterColors.STRING, if (dark) "#6aab73" else "#067d17"),
+            "com" to token(DefaultLanguageHighlighterColors.LINE_COMMENT, if (dark) "#7a7e85" else "#8c8c8c"),
+            "num" to token(DefaultLanguageHighlighterColors.NUMBER, if (dark) "#2aacb8" else "#1750eb"),
+            "fn" to token(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, if (dark) "#56a8f5" else "#00627a"),
+            "type" to token(DefaultLanguageHighlighterColors.CLASS_NAME, "inherit"),
+            "meta" to token(DefaultLanguageHighlighterColors.METADATA, if (dark) "#b3ae60" else "#9e880d")
+        )
+        return ":root { color-scheme: ${if (dark) "dark" else "light"}; " + vars.entries.joinToString(" ") { "--vscode-${it.key}: ${it.value};" } +
+            " " + tokens.entries.joinToString(" ") { "--tok-${it.key}: ${it.value};" } + " }"
     }
 }

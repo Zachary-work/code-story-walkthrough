@@ -64,7 +64,7 @@
           ],
           "sample": {
             "source": "generated",
-            "input": "{\n  \"method\": \"POST\",\n  \"path\": \"/api/checkout/quote\",\n  \"body\": {\n    \"cartId\": \"c_8841\",\n    \"promoCode\": \"SPRING15\"\n  }\n}",
+            "input": "{\n  \"req\": {\n    \"method\": \"POST\",\n    \"path\": \"/api/checkout/quote\",\n    \"body\": {\n      \"cartId\": \"c_8841\",\n      \"promoCode\": \"SPRING15\"\n    }\n  }\n}",
             "output": "{\n  \"status\": 200,\n  \"body\": {\n    \"subtotal\": 120,\n    \"discount\": 18,\n    \"tax\": 8.16,\n    \"total\": 110.16\n  }\n}",
             "note": "No test calls the controller, so the request and response were inferred from the service test. The promoCode field is new in this change."
           }

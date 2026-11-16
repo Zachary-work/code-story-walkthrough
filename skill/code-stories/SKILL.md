@@ -125,21 +125,44 @@ and step `id`s where the story is still the same one, and leaving its `comments.
 5. **Add a sample to each step.** A sample is a concrete input and output for that method, so
    the reviewer can see real values move through the path. Use the same scenario in every step
    of a story so the values line up.
+   - **A sample follows the signature of the step's function.** Read the signature. Then read
+     the definition of each type that it names: the class, interface, struct, record or schema
+     of every parameter and of the return value. Build the sample from those definitions.
    - `input` and `output` are JSON with actual values. Each is a string that holds JSON,
      formatted with two-space indentation (`JSON.stringify(value, null, 2)`).
-     - `input` is a JSON object. For a function, it has one key per parameter, by name:
-       `{ "code": "SPRING15", "subtotal": 120 }`. For an HTTP entry point, it is the request:
-       `{ "method": "POST", "path": "/api/checkout/quote", "body": { "cartId": "c_8841" } }`.
-       For an event or a command, it is the payload or the arguments.
-     - `output` is what the function returns, as JSON. For an HTTP entry point:
-       `{ "status": 200, "body": { ... } }` with the real body. When the function returns
-       nothing, give what it changed: `{ "saved": { "code": "SPRING15", "uses": 1 } }`. When it
-       throws in this scenario: `{ "throws": { "type": "PromoExpiredError", "message": "SPRING15 ended on 2025-06-30" } }`.
+     - `input` is a JSON object with one key for each parameter, named as the parameter is
+       named, in the order of the signature. For
+       `applyDiscount(ctx: PricingContext, subtotal: Money)` the keys are `ctx` and
+       `subtotal`, and there are no other keys. For a function with no parameters, write `{}`.
+     - Each value has the shape of the declared type of its parameter. Use the field names of
+       the type, and for each field a value of its declared type: a number for a number, a
+       member of the enum for an enum, an ISO string for a date, a list for a list. Do not
+       invent a field that the type does not have. Include the fields that the function reads
+       or passes on, and the fields that identify the object. You can leave out the others.
+     - `output` has the shape of the declared return type, by the same rules. For a wrapper
+       such as `Promise<T>`, `Optional<T>`, `Task<T>` or `Result<T>`, give the `T` value, or
+       `null` when it is empty in this scenario. For `void`, `None` or no return value, write
+       `null`, and say in `note` what the function changed, with the values.
+     - When the function throws in this scenario, `output` is
+       `{ "throws": { "type": "PromoExpiredError", "message": "SPRING15 ended on 2025-06-30" } }`.
+     - A method that reads the state of its object can have a `this` (or `self`) key with the
+       fields that it reads.
+     - An entry point follows its handler's signature too. For
+       `quote(@RequestBody QuoteRequest request): QuoteResponse`, the input is
+       `{ "request": { ...the QuoteRequest fields } }` and the output is the `QuoteResponse`.
+       When the parameters are framework objects, such as `(req, res)` or `(event, context)`,
+       give the parts that the handler reads:
+       `{ "req": { "method": "POST", "path": "/api/checkout/quote", "body": { "cartId": "c_8841" } } }`.
+       You can leave out a parameter that the handler only writes to, such as `res`. When the
+       handler answers through that object and returns nothing, `output` is the response that
+       it sends: `{ "status": 200, "body": { "total": 110.16 } }`.
+     - In a language without declared types, take the types from the doc comment or the type
+       hints, from a validation schema, from the fields that the function reads, and from the
+       tests. The rule is the same: only fields that the code uses, with values of the right
+       kind.
      - Write every value out. Do not describe a value: not "non-empty summary", "mocked
        object", "a valid cart", "..." or `<Cart>`. Give the summary text, the fields of the
        object, the cart with its items. For a mock, give the data it returns in this scenario.
-     - Give an object by its data fields. Leave out fields that do not matter to this step
-       instead of abbreviating them; a field you show has its real value.
    - Prefer values from an existing test. Set `source` to `"test"` and name the test in `test`.
    - If no test covers it, derive values from the types and the upstream samples, set `source`
      to `"generated"`, and say so in `note`. Never name a test that does not exist. Generated
