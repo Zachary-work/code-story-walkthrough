@@ -70,7 +70,7 @@ The **Code Stories** tool window is on the right. **Tools > Code Stories** conta
 Open a project that has a change on a branch. Tell your agent:
 
 ```
-Create code stories for this branch
+/code-stories create stories for this branch
 ```
 
 Then open the story panel in your editor.
@@ -206,7 +206,7 @@ Select lines in the editor and add a review comment. A comment has two possible 
 
 ![The thread window](docs/images/comment-thread.png)
 
-Then tell the agent: **"Read and address my review comments"**. The agent answers in the same
+Then tell the agent: `/code-stories read and address my review comments`. The agent answers in the same
 thread. It changes the code, declines with a reason, or answers the question.
 
 ### 8. Review only what changed
@@ -225,7 +225,7 @@ skill folders.
 Tell the agent:
 
 ```
-Create code stories for this branch
+/code-stories create stories for this branch
 ```
 
 ```mermaid
@@ -268,7 +268,7 @@ The validator makes sure that:
 Tell the agent:
 
 ```
-Read and address my review comments
+/code-stories read and address my review comments
 ```
 
 The agent reads each waiting comment and gives one of three answers:
@@ -284,7 +284,7 @@ The agent reads each waiting comment and gives one of three answers:
 When the code changes after the stories were written, the panel tells you. Tell the agent:
 
 ```
-Refresh the code stories so every changed line is covered
+/code-stories refresh the stories so every changed line is covered
 ```
 
 ## Features
